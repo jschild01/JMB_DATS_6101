@@ -1,0 +1,167 @@
+---
+title: "Lending Club Loan Analysis"
+author: "Jonathan Schild, Medhasweta Sen, Brian Gulko"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+```
+
+```{r}
+library(ezids)
+```
+
+# Introduction
+
+# EDA Checklist
+For our exploratory data analysis, we will start by following the checklist in *The Art of Data Science* chapter 4. These are the 9 elements of the checklist:
+
+
+1. Formulate your question
+2. Read in your data
+3. Check the packaging
+4. Look at the top and the bottom of your data
+5. Check your “n”s
+6. Validate with at least one external data source
+7. Make a plot
+8. Try the easy solution first
+9. Follow up
+
+
+## Formulate your question
+We have already done this
+
+## Read in your data
+Let's start by loading the tidyverse library and reading in the data from our project directory using the `read_csv` function.
+
+```{r}
+library(tidyverse)
+loans <- read_csv("lending_club_loan_data.csv")
+```
+
+
+## Check the packaging
+This dataset has `r nrow(loans)` rows and `r ncol(loans)` columns.
+
+
+## Look at the top and the bottom of your data
+The top looks like this:
+```{r results = "show"}
+head(loans)
+```
+
+The bottom looks like this:
+```{r results = "show"}
+tail(loans)
+```
+
+
+## Check your “n”s
+
+Let's take a look at the overall structure of the dataset:
+```{r results = "show"}
+str(loans)
+```
+
+We see that there is only one character variable, and some of the numeric variables look Boolean. Now let's look at the summary:
+
+```{r results = "show"}
+summary(loans)
+```
+
+From this we can see that some of the variables that appeared to be Boolean, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not.
+
+There are a few variables that we have an idea about what they should look like. Let's check them.
+
+Looking at the interest rate, the range is `r range(loans$int.rate)`, or between `r paste0(min(loans$int.rate)*100,"%")` and `r paste0(max(loans$int.rate)*100,"%")`, which aligns with our expectations.
+
+The range of the FICO scores is `r range(loans$fico)`, which also aligns with what we would expect.
+
+The range of the utilization is `r range(loans$revol.util)`, which doesn't entirely make sense that the percent utilization would be more than 100. We will need to look into this further.
+
+## Validate with at least one external data source
+
+According to the Kaggle site where we got this dataset from, there are 9,578 rows and 14 columns, which matches what we have. The site also shows that there is no missing data. Let's verify that by adding the total number of missing cells in the dataset, which is `r sum(is.na(loans))`.
+
+## Make a plot
+
+Let's make a histogram for each non-Boolean numeric variable.
+```{r}
+loans %>%
+  gather(variable, value,
+         c(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec)) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = "steelblue", color = "black") +
+  facet_wrap(~ variable, scales = "free") +
+  theme_minimal()
+```
+
+Some of these variables look somewhat normal, and it would make sense to create a QQ-Plot for them later. But first let's create boxplots for these same variables.
+```{r}
+loans %>%
+  gather(variable, value,
+         c(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec)) %>%
+  ggplot(aes(x = value)) +
+  geom_boxplot(fill = "steelblue", color = "black") +
+  facet_wrap(~ variable, scales = "free") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+```
+
+We can see that some of these variables have issues with outliers.
+
+## Try the easy solution first
+
+Let's try the easy way of looking at meeting the credit underwriting criteria vs the borrower fully paying. We can group by the credit.policy variable, and calculate the percentage of borrowers in each category who did not fully pay.
+
+```{r results = "Show"}
+# Create a better table for this
+loans %>%
+  group_by(credit.policy) %>%
+  summarize(mean(not.fully.paid)) %>%
+  ungroup()
+```
+
+
+From this we can see that about 13.2% of borrowers who met the credit underwriting criteria did not fully pay, while for the borrowers who did not meet the credit underwriting criteria about 27.8% did not fully pay.
+
+From this we can say that borrowers who did not meet the credit underwriting criteria were almost twice as likely to not fully pay versus those who did meet the credit underwriting criteria.
+
+
+## Follow up
+
+Dealing with outliers??
+
+
+
+# Additional EDA
+
+
+
+
+
+# Statistical Tests
+
+
+# Conclusion
+
+
+
+
+
+
+
+
