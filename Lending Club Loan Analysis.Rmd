@@ -24,6 +24,33 @@ library(ezids)
 
 # Introduction
 
+
+The Kaggle site gives descriptions for the variables. Here is what we know:
+
+```{r}
+data_definitions <- data.frame(variable = c("credit.policy", "purpose", "int.rate", "installment", "log.annual.inc", "dti", "fico", "days.with.cr.line", "revol.bal", "revol.util", "inq.last.6mths", "delinq.2yrs", "pub.rec", "not.fully.paid"),
+                          definition = c("1 if the customer meets the credit underwriting criteria of LendingClub.com, and 0 otherwise.",
+                                         "The purpose of the loan (takes values creditcard, debtconsolidation, educational, majorpurchase, smallbusiness, and all_other).",
+                                         "The interest rate of the loan, as a proportion (a rate of 11% would be stored as 0.11). Borrowers judged by LendingClub.com to be more risky are assigned higher interest rates.",
+                                         "The monthly installments owed by the borrower if the loan is funded.",
+                                         "The natural log of the self-reported annual income of the borrower.",
+                                         "The debt-to-income ratio of the borrower (amount of debt divided by annual income).",
+                                         "The FICO credit score of the borrower.",
+                                         "The number of days the borrower has had a credit line.",
+                                         "The borrower's revolving balance (amount unpaid at the end of the credit card billing cycle).",
+                                         "The borrower's revolving line utilization rate (the amount of the credit line used relative to total credit available).",
+                                         "The borrower's number of inquiries by creditors in the last 6 months.",
+                                         "The number of times the borrower had been 30+ days past due on a payment in the past 2 years.",
+                                         "The borrower's number of derogatory public records (bankruptcy filings, tax liens, or judgments).",
+                                         "Whether the borrower will be fully paid or not."))
+```
+
+
+```{r results = "show"}
+knitr::kable(data_definitions)
+```
+
+
 # EDA Checklist
 For our exploratory data analysis, we will start by following the checklist in *The Art of Data Science* chapter 4. These are the 9 elements of the checklist:
 
@@ -40,14 +67,15 @@ For our exploratory data analysis, we will start by following the checklist in *
 
 
 ## Formulate your question
-We have already done this
+We have already done this. (Add question)
 
 ## Read in your data
 Let's start by loading the tidyverse library and reading in the data from our project directory using the `read_csv` function.
 
 ```{r}
 library(tidyverse)
-loans <- read_csv("lending_club_loan_data.csv")
+# read_csv vs read.csv
+loans <- read.csv("lending_club_loan_data.csv")
 ```
 
 
@@ -58,12 +86,12 @@ This dataset has `r nrow(loans)` rows and `r ncol(loans)` columns.
 ## Look at the top and the bottom of your data
 The top looks like this:
 ```{r results = "show"}
-head(loans)
+xkabledplyhead(loans)
 ```
 
 The bottom looks like this:
 ```{r results = "show"}
-tail(loans)
+xkabledplytail(loans)
 ```
 
 
@@ -74,13 +102,13 @@ Let's take a look at the overall structure of the dataset:
 str(loans)
 ```
 
-We see that there is only one character variable, and some of the numeric variables look Boolean. Now let's look at the summary:
+We see that there is only one character variable, and some of the numeric variables look like Logicals. Now let's look at the summary:
 
 ```{r results = "show"}
-summary(loans)
+xkablesummary(loans)
 ```
 
-From this we can see that some of the variables that appeared to be Boolean, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not.
+From this we can see that some of the variables that appeared to be Logicals, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not.
 
 There are a few variables that we have an idea about what they should look like. Let's check them.
 
@@ -96,7 +124,7 @@ According to the Kaggle site where we got this dataset from, there are 9,578 row
 
 ## Make a plot
 
-Let's make a histogram for each non-Boolean numeric variable.
+Let's make a histogram for each non-Logical numeric variable.
 ```{r}
 loans %>%
   gather(variable, value,
@@ -123,6 +151,21 @@ loans %>%
 
 We can see that some of these variables have issues with outliers.
 
+
+Now let's look at the Factor and Logical variables with bar charts.
+```{r}
+loans %>%
+  gather(variable, value,
+         c(credit.policy, purpose, not.fully.paid)) %>%
+  ggplot(aes(x = value)) +
+  geom_bar(fill = "steelblue", color = "black") +
+  facet_wrap(~ variable, scales = "free") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1),
+        axis.ticks.x = element_line())
+```
+
+
 ## Try the easy solution first
 
 Let's try the easy way of looking at meeting the credit underwriting criteria vs the borrower fully paying. We can group by the credit.policy variable, and calculate the percentage of borrowers in each category who did not fully pay.
@@ -132,7 +175,8 @@ Let's try the easy way of looking at meeting the credit underwriting criteria vs
 loans %>%
   group_by(credit.policy) %>%
   summarize(mean(not.fully.paid)) %>%
-  ungroup()
+  ungroup() %>%
+  knitr::kable()
 ```
 
 
@@ -143,13 +187,31 @@ From this we can say that borrowers who did not meet the credit underwriting cri
 
 ## Follow up
 
-Dealing with outliers??
+Let us go back to the table of data definitions and add a column for the variable type.
 
+```{r}
+data_definitions_augmented <- data_definitions %>%
+  mutate(type = c("Logical", "Factor", "Numeric", "Numeric", "Numeric", "Numeric", "Integer", "Numeric", "Integer", "Numeric", "Integer", "Integer", "Integer", "Logical")) %>%
+  select(variable, type, definition)
+```
+
+```{r results = "show"}
+knitr::kable(data_definitions_augmented)
+```
+
+
+Let's also convert some of the variables to a more appropriate type
+```{r}
+loans$credit.policy <- as.logical(loans$credit.policy)
+loans$not.fully.paid <- as.logical(loans$not.fully.paid)
+
+loans$purpose <- as.factor(loans$purpose)
+```
 
 
 # Additional EDA
 
-
+Dealing with outliers??
 
 
 
