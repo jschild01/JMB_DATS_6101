@@ -11,7 +11,7 @@
 
 <meta name="author" content="Jonathan Schild, Medhasweta Sen, Brian Gulko" />
 
-<meta name="date" content="2022-11-01" />
+<meta name="date" content="2022-10-25" />
 
 <title>Lending Club Loan Analysis</title>
 
@@ -1824,7 +1824,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Lending Club Loan Analysis</h1>
 <h4 class="author">Jonathan Schild, Medhasweta Sen, Brian Gulko</h4>
-<h4 class="date">2022-11-01</h4>
+<h4 class="date">2022-10-25</h4>
 
 </div>
 
@@ -1832,29 +1832,8 @@ div.tocify {
 <pre class="r"><code>library(ezids)</code></pre>
 <div id="introduction" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Introduction</h1>
-<p>Peer-to-peer (P2P) was a phenomenon less than ten years ago,
-exploding in popularity by offering a break from traditional banking.
-Individuals flocked to the alternative credit markets as alternative
-sources of funding and for new opportunities to finance their small
-business ventures.</p>
-<p>Although direct P2P lending has undergone changes over recent years,
-it remains a viable option for borrowers and investors. We are seeking
-to understand the factors that might have signalled risky loans or
-borrowing practices and could be consumed or applied by prospective
-borrowers, lenders, and/or investors considering participating in direct
-P2P.</p>
-<p>Our analysis explored things such as income-to-debt ratios, credit
-score, interest rates, and delinquencies among direct P2P borrowers in
-an attempt to understand the risks and opportunities associated with
-P2P.</p>
-<div id="our-data" class="section level2" number="1.1">
-<h2><span class="header-section-number">1.1</span> Our Data</h2>
-<p>Our dataset contains over 9,500 observations of loan data from
-LendingClub, the largest online platform for direct P2P lending.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> We believe
-that the timeframe of 2007 to 2015 provides the most relevant data for
-prospective individual investors today, particularly because it is
-unlikely to include a significant number of large institutional lenders.
-Our variables are defined as:</p>
+<p>The Kaggle site gives descriptions for the variables. Here is what we
+know:</p>
 <pre class="r"><code>data_definitions &lt;- data.frame(variable = c(&quot;credit.policy&quot;, &quot;purpose&quot;, &quot;int.rate&quot;, &quot;installment&quot;, &quot;log.annual.inc&quot;, &quot;dti&quot;, &quot;fico&quot;, &quot;days.with.cr.line&quot;, &quot;revol.bal&quot;, &quot;revol.util&quot;, &quot;inq.last.6mths&quot;, &quot;delinq.2yrs&quot;, &quot;pub.rec&quot;, &quot;not.fully.paid&quot;),
                           definition = c(&quot;1 if the customer meets the credit underwriting criteria of LendingClub.com, and 0 otherwise.&quot;,
                                          &quot;The purpose of the loan (takes values creditcard, debtconsolidation, educational, majorpurchase, smallbusiness, and all_other).&quot;,
@@ -1869,9 +1848,8 @@ Our variables are defined as:</p>
                                          &quot;The borrower&#39;s number of inquiries by creditors in the last 6 months.&quot;,
                                          &quot;The number of times the borrower had been 30+ days past due on a payment in the past 2 years.&quot;,
                                          &quot;The borrower&#39;s number of derogatory public records (bankruptcy filings, tax liens, or judgments).&quot;,
-                                         &quot;Whether the borrower will be fully paid or not.&quot;))
-
-knitr::kable(data_definitions)</code></pre>
+                                         &quot;Whether the borrower will be fully paid or not.&quot;))</code></pre>
+<pre class="r"><code>knitr::kable(data_definitions)</code></pre>
 <table>
 <thead>
 <tr>
@@ -2007,7 +1985,6 @@ Whether the borrower will be fully paid or not.
 </tr>
 </tbody>
 </table>
-</div>
 </div>
 <div id="eda-checklist" class="section level1" number="2">
 <h1><span class="header-section-number">2</span> EDA Checklist</h1>
@@ -3082,12 +3059,9 @@ mean(not.fully.paid)
 underwriting criteria did not fully pay, while for the borrowers who did
 not meet the credit underwriting criteria about 27.8% did not fully
 pay.</p>
-<p>This indicates borrowers who did not meet the credit underwriting
-criteria were almost twice as likely to be default on their loans than
-those who did meet the criteria. For comparison, default rates on loans
-from commercial banks for the same period as our dataset averaged 4.48%,
-with a maximum default rate of 7.49% default rate towards the end of
-2009, according to the St. Louis Federal Reserve Bank.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>From this we can say that borrowers who did not meet the credit
+underwriting criteria were almost twice as likely to not fully pay
+versus those who did meet the credit underwriting criteria.</p>
 </div>
 <div id="follow-up" class="section level2" number="2.9">
 <h2><span class="header-section-number">2.9</span> Follow up</h2>
@@ -3294,26 +3268,6 @@ loans$purpose &lt;- as.factor(loans$purpose)</code></pre>
 </div>
 <div id="conclusion" class="section level1" number="5">
 <h1><span class="header-section-number">5</span> Conclusion</h1>
-<p>Risks to our analysis and opportunities for future analyses:</p>
-<p>Private individuals historically made up the bulk of lenders in P2P
-markets. However, high interest rates and the prospects of risky
-borrowers undermined P2P lending as a legitimate financial industry.
-Combined with the urge for more growth by intermediaries like
-LendingClub, these concerns began to prompt higher lending standards and
-discussions about more regulation.</p>
-<p>By 2017, shortly after the peak of the P2P industry, larger
-institutions and banks began to take over private individuals as the
-primary sources of lending in P2P markets. We suspect/assume this shift
-in P2P lenders altered the makeup of who receives what, thereby
-rendering recent research on P2P loans as an investment opportunity less
-reliable as a guide for today’s prospective individual investors.</p>
-</div>
-<div class="footnotes footnotes-end-of-document">
-<hr />
-<ol>
-<li id="fn1"><p><a href="https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis" class="uri">https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p><a href="https://fred.stlouisfed.org/series/DRALACBN#" class="uri">https://fred.stlouisfed.org/series/DRALACBN#</a><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-</ol>
 </div>
 
 
