@@ -221,6 +221,97 @@ Dealing with outliers??
 
 # Statistical Tests
 
+```{r}
+loadPkg("BSDA")
+ztest95rate = z.test(x=loans$int.rate, sigma.x = 2.31) # default conf.level = 0.95
+ztest95rate
+ztest99rate = z.test(x=loans$int.rate, sigma.x = 2.31, conf.level=0.99 )
+ztest99rate
+ztest50rate = z.test(x=loans$int.rate, sigma.x = 2.31, conf.level=0.50 )
+ztest50rate
+ztest99rate$estimate
+ztest99rate$statistic
+ztest99rate$method
+ztest95rate$estimate
+ztest95rate$statistic
+ztest95rate$method
+ztest50rate$estimate
+ztest50rate$statistic
+ztest50rate$method
+```
+```{r}
+ztest95installment = z.test(x=loans$installment, sigma.x = 2.31) # default conf.level = 0.95
+ztest95installment
+ztest99installment = z.test(x=loans$installment, sigma.x = 2.31, conf.level=0.99 )
+ztest99installment
+ztest50installment = z.test(x=loans$installment, sigma.x = 2.31, conf.level=0.50 )
+ztest50installment
+ztest99installment$estimate
+ztest99installment$statistic
+ztest99installment$method
+ztest95installment$estimate
+ztest95installment$statistic
+ztest95installment$method
+ztest50installment$estimate
+ztest50installment$statistic
+ztest50installment$method
+```
+```{r}
+ztest95annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31) # default conf.level = 0.95
+ztest95annual
+ztest99annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31, conf.level=0.99 )
+ztest99annual
+ztest50annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31, conf.level=0.50 )
+ztest50annual
+ztest99annual$estimate
+ztest99annual$statistic
+ztest99annual$method
+ztest95annual$estimate
+ztest95annual$statistic
+ztest95annual$method
+ztest50annual$estimate
+ztest50annual$statistic
+ztest50annual$method
+```
+```{r}
+ztest95fico = z.test(x=loans$fico, sigma.x = 2.31) # default conf.level = 0.95
+ztest95fico
+ztest99fico = z.test(x=loans$fico, sigma.x = 2.31, conf.level=0.99 )
+ztest99fico
+ztest50fico = z.test(x=loans$fico, sigma.x = 2.31, conf.level=0.50 )
+ztest50fico
+ztest99fico$estimate
+ztest99fico$statistic
+ztest99fico$method
+ztest95fico$estimate
+ztest95fico$statistic
+ztest95fico$method
+ztest50fico$estimate
+ztest50fico$statistic
+ztest50fico$method
+```
+```{r}
+aov1=aov(fico ~ purpose, data = loans)
+aov1summary=summary(aov1)
+aov1summary
+aov1turkey=TukeyHSD(aov1)
+aov1turkey
+```
+```{r}
+aov2=aov(installment ~ purpose, data = loans)
+aov2summary=summary(aov2)
+aov2summary
+aov2turkey=TukeyHSD(aov2)
+aov2turkey
+```
+```{r}
+
+aov3=aov(int.rate ~ purpose, data = loans)
+aov3summary=summary(aov3)
+aov3summary
+aov3turkey=TukeyHSD(aov3)
+aov3turkey
+```
 
 # Conclusion
 
