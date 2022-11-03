@@ -89,26 +89,21 @@ xkabledplytail(loans)
 
 ## Check your “n”s
 
-Let's take a look at the overall structure of the dataset:
+### Data structure:
+By examining the structure of our data, we can see that there is only one character variable, and some of the numeric variables look like Logicals. From this we can see that some of the variables that appeared to be Logicals, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not. *-- does this matter or impact our analysis?????*
 ```{r results = "show"}
 str(loans)
 ```
 
-We see that there is only one character variable, and some of the numeric variables look like Logicals. Now let's look at the summary:
+### Dataset reliability:
+We have an idea of what to expect for a few variables, such as interest rate and credit score, so we were table to test the dataset against some of our expectations to gauge its reliability. By inspecting the dataframe, we can see that interest rates for the data are between `r paste0(min(loans$int.rate)*100,"%")` and `r paste0(max(loans$int.rate)*100,"%")` and credit scores range from `r paste0(min(loans$fico)*100,"%")` to `r paste0(max(loans$fico)*100,"%")`. Although interest rates might seem to reach excessively high rates or credit scores too meager, the P2P market tended to consist of more risky loans. This aligned with our expectation and reinforced our confidence in the dataset. 
+
+The range of the utilization, or the percent of credit being used, is between `r range(loans$revol.util)`. Someone utilizing more than 100% of the credit available to them initially seemed erroneous; however, this can occur from technical error, creditors and collectors reporting at different date/times, borrowers opening and closing credit lines, or possibly when borrowers appear as authorized users of others’ credit lines. Regardless, only 27 loans within our dataset appear to exceed the standard maximum of 100% so we do not expect this to have a significant effect on our analysis.
 
 ```{r results = "show"}
 xkablesummary(loans)
 ```
 
-From this we can see that some of the variables that appeared to be Logicals, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not.
-
-There are a few variables that we have an idea about what they should look like. Let's check them.
-
-Looking at the interest rate, the range is `r range(loans$int.rate)`, or between `r paste0(min(loans$int.rate)*100,"%")` and `r paste0(max(loans$int.rate)*100,"%")`, which aligns with our expectations.
-
-The range of the FICO scores is `r range(loans$fico)`, which also aligns with what we would expect.
-
-The range of the utilization is `r range(loans$revol.util)`, which doesn't entirely make sense that the percent utilization would be more than 100. We will need to look into this further.
 
 ## Validate with at least one external data source
 
