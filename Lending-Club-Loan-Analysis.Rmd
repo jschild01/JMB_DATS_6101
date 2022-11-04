@@ -151,6 +151,9 @@ loans %>%
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1),
         axis.ticks.x = element_line())
 ```
+# Box plot for the quantitative variables with different credit policy
+# Box plot for the quantitative variables with different "not.fully.paid"
+# Box plot for the quantitative variables with different purpose
 
 
 ## Try the easy solution first
@@ -298,7 +301,7 @@ aov3summary
 aov3turkey=TukeyHSD(aov3)
 aov3turkey
 ```
-
+#qqplot for qqnorn() in a lattice for visual normality test
 # Conclusion
 
 Risks to our analysis and opportunities for future analyses:
