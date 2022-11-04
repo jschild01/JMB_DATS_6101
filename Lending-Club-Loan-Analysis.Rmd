@@ -15,12 +15,8 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+# We want the results to be hidden by default, though for some chunks we will override this to show the results
 knitr::opts_chunk$set(warning = F, results = "hide", message = F)
-loans <- read.csv("lending_club_loan_data.csv") #this is here because the code in the 'read and examine' portion comes after the reference to 'loans' in the text and will error out without if here.
-```
-
-```{r}
-library(ezids)
 ```
 
 # Introduction
@@ -33,6 +29,7 @@ Although direct P2P lending has undergone changes over recent years, it remains 
 Our dataset contains over 9,500 observations of loan data from LendingClub, the largest online platform for direct P2P lending.^[https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis] We believe that the timeframe of 2007 to 2015 provides the most relevant data for prospective individual investors today, particularly because it is unlikely to include a significant number of large institutional lenders. Our variables are defined as:
 
 ```{r results = "show"}
+# This is copied form the Kaggle site
 data_definitions <- data.frame(variable = c("credit.policy", "purpose", "int.rate", "installment", "log.annual.inc", "dti", "fico", "days.with.cr.line", "revol.bal", "revol.util", "inq.last.6mths", "delinq.2yrs", "pub.rec", "not.fully.paid"),
                           definition = c("1 if the customer meets the credit underwriting criteria of LendingClub.com, and 0 otherwise.",
                                          "The purpose of the loan (takes values creditcard, debtconsolidation, educational, majorpurchase, smallbusiness, and all_other).",
@@ -53,121 +50,143 @@ knitr::kable(data_definitions)
 ```
 
 
-# EDA Checklist
-Our exploratory data analysis will adhere to a slightly modified^[We combine steps 2, 3, and 4 of the original 9-step checklist.] version of the checklist presented in Chapter 4 of *The Art of Data Science*.^[Peng, Roger D., and Elizabeth Matsui. “Chapter 4.” The Art of Data Science: A Guide for Anyone Who Works with Data, Skybrude Consulting LLC, Victoria, 2016, pp. 33–33.] These are the elements of our checklist:
+# Exploratory Data Analysis
+Our exploratory data analysis will adhere to the 9-step^[Back to original] checklist presented in Chapter 4 of *The Art of Data Science*.^[Peng, Roger D., and Elizabeth Matsui. “Chapter 4.” The Art of Data Science: A Guide for Anyone Who Works with Data, Skybrude Consulting LLC, Victoria, 2016, pp. 33–33.] These are the elements of our checklist:
 
 1. Formulate our question
-2. Read in and examine the data
-3. Check our “n”s
-4. Validate with at least one external data source
-5. Make a plot
-6. Try the easy solution first
-7. Follow up
+2. Read in our data
+3. Check the packaging
+4. Look at the top and the bottom of your data
+5. Check your "n"s
+6. Validate with at least one external data source
+7. Make a plot
+8. Try the easy solution first
+9. Follow up
 
 
 ## Formulate our question
 Our analysis explored things such as income-to-debt ratios, credit score, interest rates, and delinquencies among direct P2P borrowers in an attempt to understand the risks and opportunities associated with P2P. Specifically, we intend to examine the impact that these variables have on who received loans and who defaulted on their loans between 2007 and 2015. 
 
-## Read in and examine the data
-After reading in our dataset and loading the tidyverse library,^[Our code requires the tidyverse and ezids libraries.] we can see that our dataset contains `r nrow(loans)` rows of data with `r ncol(loans)` columns. Additionally, the top and bottom five rows of our dataframe indicate the data is structured in an acceptable way and that our variables are heading the correct columns of data. *ANY BLANKS OR FORMATTING ISSUES WE HAD TO DEAL WITH???*
+
+## Read in our data
+We start by loading the tidyverse and ezids libraries^[Our code requires the tidyverse and ezids libraries.] and reading on our dataset.
 ```{r}
-library(tidyverse)
+library(ezids) # We will use functions form this package to get nicer looking results
+library(tidyverse) # We need this package for data manipulation, pipnig, and graphing
 # read_csv vs read.csv
 loans <- read.csv("lending_club_loan_data.csv")
 ```
 
-### The top of our dataframe:
+
+## Check the packaging
+We can see that our dataset contains `r nrow(loans)` rows of data with `r ncol(loans)` columns. Next let's examine the structure of the dataset.
 ```{r results = "show"}
-xkabledplyhead(loans)
-```
-
-### The tail of our dataframe:
-```{r results = "show"}
-xkabledplytail(loans)
-```
-
-
-## Check your “n”s
-
-### Data structure:
-By examining the structure of our data, we can see that there is only one character variable, and some of the numeric variables look like Logicals. From this we can see that some of the variables that appeared to be Logicals, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not. *-- does this matter or impact our analysis?????*
-```{r results = "show"}
+# There is unfortunately no ezids function to see the result in a nice looking table, so we will use the standard function.
 str(loans)
 ```
 
-### Dataset reliability:
+By examining the structure of our data, we can see that there is only one character variable which might be a factor, and some of the numeric variables look like Logicals.
+
+
+## Look at the top and the bottom of your data
+We can also look at the top and bottom rows of our dataset to get a better feel for the data.
+
+The top of our dataset:
+```{r results = "show"}
+# We use the xkabledplyhead() function form the ezids package to see the result in a nice looking table.
+xkabledplyhead(loans)
+```
+
+The bottom of our dataset:
+```{r results = "show"}
+# We use the xkabledplytail() function form the ezids package to see the result in a nice looking table.
+xkabledplytail(loans)
+```
+
+The top and bottom rows of our dataset indicate the data is structured in an acceptable way and that our variables match up with the values for each column.
+
+
+## Check your "n"s
+We can get some descriptive statistics of the variables to help us better understand the data.
+```{r results = "show"}
+# We use the xkablesummary() function from the ezids package to see the result in a nice looking table.
+xkablesummary(loans)
+```
+
+From this we can see that some of the variables that appeared to be Logicals, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not.
+
 We have an idea of what to expect for a few variables, such as interest rate and credit score, so we were table to test the dataset against some of our expectations to gauge its reliability. By inspecting the dataframe, we can see that interest rates for the data are between `r paste0(min(loans$int.rate)*100,"%")` and `r paste0(max(loans$int.rate)*100,"%")` and credit scores range from `r paste0(min(loans$fico)*100,"%")` to `r paste0(max(loans$fico)*100,"%")`. Although interest rates might seem to reach excessively high rates or credit scores too meager, the P2P market tended to consist of more risky loans. This aligned with our expectation and reinforced our confidence in the dataset. 
 
 The range of the utilization, or the percent of credit being used, is between `r range(loans$revol.util)`. Someone utilizing more than 100% of the credit available to them initially seemed erroneous; however, this can occur from technical error, creditors and collectors reporting at different date/times, borrowers opening and closing credit lines, or possibly when borrowers appear as authorized users of others’ credit lines. Regardless, only 27 loans within our dataset appear to exceed the standard maximum of 100% so we do not expect this to have a significant effect on our analysis.
 
-```{r results = "show"}
-xkablesummary(loans)
-```
-
 
 ## Validate with at least one external data source
-
 According to the Kaggle site where we got this dataset from, there are 9,578 rows and 14 columns, which matches what we have. The site also shows that there is no missing data. Let's verify that by adding the total number of missing cells in the dataset, which is `r sum(is.na(loans))`.
 
-## Make a plot
 
+## Make a plot
 Let's make a histogram for each non-Logical numeric variable.
 ```{r}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a histogram
+# for each variable using the facet_wrap() function in ggplot2.
 loans %>%
-  gather(variable, value,
-         c(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec)) %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec) %>%
+  gather(variable, value) %>%
   ggplot(aes(x = value)) +
   geom_histogram(fill = "steelblue", color = "black") +
-  facet_wrap(~ variable, scales = "free") +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
   theme_minimal()
 ```
 
 Some of these variables look somewhat normal, and it would make sense to create a QQ-Plot for them later. But first let's create boxplots for these same variables.
 ```{r}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
+# for each variable using the facet_wrap() function in ggplot2.
 loans %>%
-  gather(variable, value,
-         c(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec)) %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec) %>%
+  gather(variable, value) %>%
   ggplot(aes(x = value)) +
-  geom_boxplot(fill = "steelblue", color = "black") +
-  facet_wrap(~ variable, scales = "free") +
+  geom_boxplot(fill = "steelblue", color = "black",
+               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Boxplots of Numeric Variables", x = "Value") +
   theme_minimal() +
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 ```
 
 We can see that some of these variables have issues with outliers.
 
-
 Now let's look at the Factor and Logical variables with bar charts.
 ```{r}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a bar graph
+# for each variable using the facet_wrap() function in ggplot2.
 loans %>%
-  gather(variable, value,
-         c(credit.policy, purpose, not.fully.paid)) %>%
+  select(credit.policy, purpose, not.fully.paid) %>%
+  gather(variable, value) %>%
   ggplot(aes(x = value)) +
   geom_bar(fill = "steelblue", color = "black") +
-  facet_wrap(~ variable, scales = "free") +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Bar Charts of Non-Numeric Variables", x = "Value", y = "Count") +
   theme_minimal() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1),
-        axis.ticks.x = element_line())
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), axis.ticks.x = element_line())
 ```
-# Box plot for the quantitative variables with different credit policy
-# Box plot for the quantitative variables with different "not.fully.paid"
-# Box plot for the quantitative variables with different purpose
+
+From this we can see that the `purpose` variable would be a good candidate to perform an ANOVA test on. 
 
 
 ## Try the easy solution first
-
 Let's try the easy way of looking at meeting the credit underwriting criteria vs the borrower fully paying. We can group by the credit.policy variable, and calculate the percentage of borrowers in each category who did not fully pay.
-
 ```{r results = "Show"}
-# Create a better table for this
+# We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
 loans %>%
   group_by(credit.policy) %>%
-  summarize(mean(not.fully.paid)) %>%
+  summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
   ungroup() %>%
-  knitr::kable()
-
+  knitr::kable(align = "c")
 ```
 
 
@@ -200,16 +219,70 @@ loans$not.fully.paid <- as.logical(loans$not.fully.paid)
 loans$purpose <- as.factor(loans$purpose)
 ```
 
+Now we can further explore the data to see how the numeric variables differ based on the on the `credit.policy`, `not.fully.paid`, and `purpose` variables. Let's make some boxplots to visualize this.
 
-# Additional EDA
+### Boxplots for the numeric variables comparing different credit.policy
+```{r}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
+# for each variable using the facet_wrap() function in ggplot2. We can see this for each credit policy value by excluding
+# it in the gather() function.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, credit.policy) %>%
+  gather(variable, value, -credit.policy) %>%
+  ggplot(aes(x = value, y = as.logical(credit.policy), fill = as.logical(credit.policy))) +
+  geom_boxplot(outlier.size = 2, outlier.alpha = 0.2) +  # Translucent and larger outliers to help with overplotting
+  guides(fill = guide_legend(reverse = TRUE)) + # So the legend order matches the order in the graphs
+  facet_wrap(~ variable, scales = "free_x") + # Free x scale so the graphs are readable
+  labs(title = "Boxplots of Numeric Variables", subtitle = "Comparing `credit.policy` Values",
+       x = "Value", y = "Count", fill = "Credit Policy") +
+  theme_minimal()
+```
 
-Dealing with outliers??
 
+### Boxplots for the numeric variables comparing different not.fully.paid
+```{r}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
+# for each variable using the facet_wrap() function in ggplot2. We can see this for each not fully paid value by excluding
+# it in the gather() function.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, not.fully.paid) %>%
+  gather(variable, value, -not.fully.paid) %>%
+  ggplot(aes(x = value, y = as.logical(not.fully.paid), fill = as.logical(not.fully.paid))) +
+  geom_boxplot(outlier.size = 2, outlier.alpha = 0.2) +  # Translucent and larger outliers to help with overplotting
+  guides(fill = guide_legend(reverse = TRUE)) + # So the legend order matches the order in the graphs
+  facet_wrap(~ variable, scales = "free_x") + # Free x scale so the graphs are readable
+  labs(title = "Boxplots of Numeric Variables", subtitle = "Comparing `not.fully.paid` Values",
+       x = "Value", y = "Count", fill = "Not Fully Paid") +
+  theme_minimal()
+```
+
+
+### Boxplots for the numeric variables comparing different purpose
+```{r}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
+# for each variable using the facet_wrap() function in ggplot2. We can see this for each purpose value by excluding
+# it in the gather() function.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, purpose) %>%
+  gather(variable, value, -purpose) %>%
+  ggplot(aes(x = value, y = purpose, fill = purpose)) +
+  geom_boxplot(outlier.size = 2, outlier.alpha = 0.2) +
+  guides(fill = guide_legend(reverse = TRUE)) + # So the legend order matches the order in the graphs
+  facet_wrap(~ variable, scales = "free_x") + # Free x scale so the graphs are readable
+  labs(title = "Boxplots of Numeric Variables", subtitle = "Comparing `purpose` Values",
+       x = "Value", y = "Count", fill = "Purpose") +
+  theme_minimal()
+```
 
 
 # Statistical Tests
 Interpretation^[https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[https://www.debt.org/credit/loans/personal/lending-club-review/] ^[https://nycdatascience.com/blog/student-works/lendingclub-profitability-predictions/] ^[https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
 
+
+## Z-Tests
 ```{r}
 loadPkg("BSDA")
 ztest95rate = z.test(x=loans$int.rate, sigma.x = 2.31) # default conf.level = 0.95
@@ -228,6 +301,7 @@ ztest50rate$estimate
 ztest50rate$statistic
 ztest50rate$method
 ```
+
 ```{r}
 ztest95installment = z.test(x=loans$installment, sigma.x = 2.31) # default conf.level = 0.95
 ztest95installment
@@ -245,6 +319,7 @@ ztest50installment$estimate
 ztest50installment$statistic
 ztest50installment$method
 ```
+
 ```{r}
 ztest95annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31) # default conf.level = 0.95
 ztest95annual
@@ -262,6 +337,7 @@ ztest50annual$estimate
 ztest50annual$statistic
 ztest50annual$method
 ```
+
 ```{r}
 ztest95fico = z.test(x=loans$fico, sigma.x = 2.31) # default conf.level = 0.95
 ztest95fico
@@ -279,6 +355,9 @@ ztest50fico$estimate
 ztest50fico$statistic
 ztest50fico$method
 ```
+
+
+## ANOVA Tests
 ```{r}
 aov1=aov(fico ~ purpose, data = loans)
 aov1summary=summary(aov1)
@@ -286,6 +365,7 @@ aov1summary
 aov1turkey=TukeyHSD(aov1)
 aov1turkey
 ```
+
 ```{r}
 aov2=aov(installment ~ purpose, data = loans)
 aov2summary=summary(aov2)
@@ -293,16 +373,32 @@ aov2summary
 aov2turkey=TukeyHSD(aov2)
 aov2turkey
 ```
-```{r}
 
+```{r}
 aov3=aov(int.rate ~ purpose, data = loans)
 aov3summary=summary(aov3)
 aov3summary
 aov3turkey=TukeyHSD(aov3)
 aov3turkey
 ```
-#qqplot for qqnorn() in a lattice for visual normality test
-# Conclusion
+
+
+## Q-Q Plots
+```{r}
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec) %>%
+  gather(variable, value) %>%
+  ggplot(aes(sample = value)) +
+  geom_qq(color = "steelblue") +
+  geom_qq_line() +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
+  theme_minimal()
+```
+
+
+# Conclusion and Next Steps
 
 Risks to our analysis and opportunities for future analyses:
 
@@ -310,7 +406,11 @@ Private individuals historically made up the bulk of lenders in P2P markets. How
 
 By 2017, shortly after the peak of the P2P industry, larger institutions and banks began to take over private individuals as the primary sources of lending in P2P markets. We suspect/assume this shift in P2P lenders altered the makeup of who receives what, thereby rendering recent research on P2P loans as an investment opportunity less reliable as a guide for today’s prospective individual investors.
 
+Dealing with outliers?
 
+Conclusions?
+
+Next Steps?
 
 
 
