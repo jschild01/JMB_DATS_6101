@@ -30,6 +30,7 @@ Our dataset contains over 9,500 observations of loan data from LendingClub, the 
 
 ```{r results = "show"}
 # This is copied form the Kaggle site
+# We will use a kable table for simplicity
 data_definitions <- data.frame(variable = c("credit.policy", "purpose", "int.rate", "installment", "log.annual.inc", "dti", "fico", "days.with.cr.line", "revol.bal", "revol.util", "inq.last.6mths", "delinq.2yrs", "pub.rec", "not.fully.paid"),
                           definition = c("1 if the customer meets the credit underwriting criteria of LendingClub.com, and 0 otherwise.",
                                          "The purpose of the loan (takes values creditcard, debtconsolidation, educational, majorpurchase, smallbusiness, and all_other).",
@@ -74,6 +75,7 @@ We start by loading the tidyverse and ezids libraries^[Our code requires the tid
 library(ezids) # We will use functions form this package to get nicer looking results
 library(tidyverse) # We need this package for data manipulation, piping, and graphing
 library(corrplot) # We will need this package to plot the correlation matrix
+library(scales) # This package will help us when labeling the scatter plots
 # Read in the data from the working directory
 loans <- read_csv("lending_club_loan_data.csv")
 ```
@@ -116,9 +118,9 @@ xkablesummary(loans)
 
 From this we can see that some of the variables that appeared to be logicals, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not.
 
-We have an idea of what to expect for a few variables, such as interest rate and credit score, so we were table to test the dataset against some of our expectations to gauge its reliability. By inspecting the dataframe, we can see that interest rates for the data are between `r paste0(min(loans$int.rate)*100,"%")` and `r paste0(max(loans$int.rate)*100,"%")` and credit scores range from `r paste0(min(loans$fico)*100,"%")` to `r paste0(max(loans$fico)*100,"%")`. Although interest rates might seem to reach excessively high rates or credit scores too meager, the P2P market tended to consist of more risky loans. This aligned with our expectation and reinforced our confidence in the dataset. 
+We have an idea of what to expect for a few variables, such as interest rate and credit score, so we were table to test the dataset against some of our expectations to gauge its reliability. By inspecting the dataframe, we can see that interest rates for the data are between `r paste0(min(loans$int.rate)*100,"%")` and `r paste0(max(loans$int.rate)*100,"%")` and credit scores range from `r min(loans$fico)` to `r max(loans$fico)`. Although interest rates might seem to reach excessively high rates or credit scores too meager, the P2P market tended to consist of more risky loans. This aligned with our expectation and reinforced our confidence in the dataset. 
 
-The range of the utilization, or the percent of credit being used, is between `r range(loans$revol.util)`. Someone utilizing more than 100% of the credit available to them initially seemed erroneous; however, this can occur from technical error, creditors and collectors reporting at different date/times, borrowers opening and closing credit lines, or possibly when borrowers appear as authorized users of others’ credit lines. Regardless, only `r sum(loans$revol.util > 100)` loans within our dataset appear to exceed the standard maximum of 100% so we do not expect this to have a significant effect on our analysis.
+The range of the utilization, or the percent of credit being used, is between `r paste0(min(loans$revol.util), "%")` and `r paste0(max(loans$revol.util), "%")`. Someone utilizing more than 100% of the credit available to them initially seemed erroneous; however, this can occur from technical error, creditors and collectors reporting at different date/times, borrowers opening and closing credit lines, or possibly when borrowers appear as authorized users of others’ credit lines. Regardless, only `r sum(loans$revol.util > 100)` loans within our dataset appear to exceed the standard maximum of 100% so we do not expect this to have a significant effect on our analysis.
 
 
 ## Validate with at least one external data source
@@ -130,7 +132,6 @@ Let's make a histogram for each non-logical numeric variable.
 ```{r}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a histogram
 # for each variable using the facet_wrap() function in ggplot2.
-
 loans %>%
   select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
            inq.last.6mths, delinq.2yrs, pub.rec) %>%
@@ -203,18 +204,21 @@ This indicates borrowers who did not meet the credit underwriting criteria were 
 Let us go back to the table of data definitions and add a column for the variable type.
 
 ```{r}
+# Add a type column and reorder it so that definition is last
 data_definitions_augmented <- data_definitions %>%
   mutate(type = c("Logical", "Factor", "Numeric", "Numeric", "Numeric", "Numeric", "Integer", "Numeric", "Integer", "Numeric", "Integer", "Integer", "Integer", "Logical")) %>%
   select(variable, type, definition)
 ```
 
 ```{r results = "show"}
+# We will use a kable table for simplicity
 knitr::kable(data_definitions_augmented)
 ```
 
 
-Let's also convert some of the variables to a more appropriate type
+Let's also convert some of the variables to a more appropriate type. the `credit.policy` and `not.fully.paid` variables are logicals, and the `purpose` variable we will use as a factor.
 ```{r}
+# These variables may act differently from here on out
 loans$credit.policy <- as.logical(loans$credit.policy)
 loans$not.fully.paid <- as.logical(loans$not.fully.paid)
 
@@ -286,8 +290,47 @@ loans_correlation_matrix <- loans %>%
   select(-purpose) %>%
   cor()
 
+# The mixed correlation plot makes a nice visualization
 corrplot.mixed(loans_correlation_matrix, tl.pos = "lt")
 ```
+
+## Scatter Plots
+```{r}
+loans %>%
+  ggplot(aes(x = fico, y = int.rate)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  labs(title = "Interest Rate vs FICO Score",
+       x = "FICO Score", y = "Interest Rate") +
+  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
+  theme_minimal()
+
+loans %>%
+  ggplot(aes(x = int.rate, y = revol.util)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  labs(title = "Revolving Line Utilization Rate vs Interest Rate",
+       x = "Interest Rate", y = "Revolving Line Utilization Rate") +
+  scale_x_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  theme_minimal()
+
+loans %>%
+  ggplot(aes(x = log.annual.inc, y = installment)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  labs(title = "Installment vs Log of Annual Income",
+       x = "Log of Annual Income", y = "Installment") +
+  theme_minimal()
+
+loans %>%
+  ggplot(aes(x = fico, y = revol.util)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  labs(title = "Revolving Line Utilization Rate vs FICO Score",
+       x = "FICO Score", y = "Revolving Line Utilization Rate") +
+  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  theme_minimal()
+```
+
 
 
 # Statistical Tests
@@ -1105,64 +1148,6 @@ cov(loans$delinq.2yrs,loans$pub.rec)
 cor(loans$delinq.2yrs,loans$pub.rec)
 ```
 
-
-```{r}
-plot(loans$int.rate,loans$installment)
-plot(loans$int.rate,loans$log.annual.in)
-plot(loans$int.rate,loans$dti)
-plot(loans$int.rate,loans$fico)
-plot(loans$int.rate,loans$days.with.cr.line)
-plot(loans$int.rate,loans$revol.bal)
-plot(loans$int.rate,loans$revol.util)
-plot(loans$int.rate,loans$inq.last.6mths)
-plot(loans$int.rate,loans$delinq.2yrss)
-plot(loans$int.rate,loans$pub.rec)
-plot(loans$installment,loans$log.annual.in)
-plot(loans$installment,loans$dti)
-plot(loans$installment,loans$fico)
-plot(loans$installment,loans$days.with.cr.line)
-plot(loans$installment,loans$revol.bal)
-plot(loans$installment,loans$revol.util)
-plot(loans$installment,loans$inq.last.6mths)
-plot(loans$installment,loans$delinq.2yrss)
-plot(loans$installment,loans$pub.rec)
-plot(loans$log.annual.inc,loans$dti)
-plot(loans$log.annual.inc,loans$fico)
-plot(loans$log.annual.inc,loans$days.with.cr.line)
-plot(loans$log.annual.inc,loans$revol.bal)
-plot(loans$log.annual.inc,loans$revol.util)
-plot(loans$log.annual.inc,loans$inq.last.6mths)
-plot(loans$log.annual.inc,loans$delinq.2yrss)
-plot(loans$log.annual.inc,loans$pub.rec)
-plot(loans$dti,loans$fico)
-plot(loans$dti,loans$days.with.cr.line)
-plot(loans$dti,loans$revol.bal)
-plot(loans$dti,loans$revol.util)
-plot(loans$dti,loans$inq.last.6mths)
-plot(loans$dti,loans$delinq.2yrs)
-plot(loans$dti,loans$pub.rec)
-plot(loans$fico,loans$days.with.cr.line)
-plot(loans$fico,loans$revol.bal)
-plot(loans$fico,loans$revol.util)
-plot(loans$fico,loans$inq.last.6mths)
-plot(loans$fico,loans$delinq.2yrs)
-plot(loans$fico,loans$pub.rec)
-plot(loans$days.with.cr.line,loans$revol.bal)
-plot(loans$days.with.cr.line,loans$revol.util)
-plot(loans$days.with.cr.line,loans$inq.last.6mths)
-plot(loans$days.with.cr.line,loans$delinq.2yrs)
-plot(loans$days.with.cr.line,loans$pub.rec)
-plot(loans$revol.bal,loans$revol.util)
-plot(loans$revol.bal,loans$inq.last.6mths)
-plot(loans$revol.bal,loans$delinq.2yrs)
-plot(loans$revol.bal,loans$pub.rec)
-plot(loans$revol.util,loans$inq.last.6mths)
-plot(loans$revol.util,loans$delinq.2yrs)
-plot(loans$revol.util,loans$pub.rec)
-plot(loans$inq.last.6mths,loans$delinq.2yrs)
-plot(loans$inq.last.6mths,loans$pub.rec)
-plot(loans$delinq.2yrs,loans$pub.rec)
-```
 
 ## Q-Q Plots
 ```{r}
