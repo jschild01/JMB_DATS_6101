@@ -128,7 +128,7 @@ library(corrplot) # We will need this package to plot the correlation matrix
 library(scales) # This package will help us when labeling the scatter plots
 library(gridExtra) # For additional table and image functionality
 # Read in the data from the working directory
-loans <- read_csv("lending_club_loan_data.csv")
+loans <- read_csv("loan_data.csv")
 #loans
 ```
 
@@ -429,14 +429,13 @@ loans %>%
 Interpretation^[https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[https://www.debt.org/credit/loans/personal/lending-club-review/] ^[https://nycdatascience.com/blog/student-works/lendingclub-profitability-predictions/] ^[https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
 
 
-## T-Interval Tests
+## T-Tests
 
-<<<<<<< HEAD
-We can perform t-interval tests for each numeric variable in our dataset. Not all of the results may be useful, but we want to have them available for further consideration.
+A t-test is a statistical test that compares the means of two samples. It is used in hypothesis testing, with a null hypothesis that the difference in group means is zero and an alternate hypothesis that the difference in group means is different from zero.
+We can perform t-tests for each numeric variable in our dataset. Not all of the results may be useful, but we want to have them available for further consideration.
 
 =======
 ## T-tests:
->>>>>>> fe57b78a10f8ebd58b427a3528031f5265cc6498
 ```{r results = "show"}
 
 library(broom)
@@ -510,7 +509,6 @@ dev.off()
 ttest95days.with.cr.line = t.test(x=loans$days.with.cr.line) # default conf.level = 0.95
 ttest99days.with.cr.line = t.test(x=loans$days.with.cr.line, conf.level=0.99 )
 ttest50days.with.cr.line = t.test(x=loans$days.with.cr.line, conf.level=0.50 )
-
 
 
 tab <- map_df(list(ttest95days.with.cr.line,ttest99days.with.cr.line,ttest50days.with.cr.line), tidy)
@@ -588,11 +586,10 @@ dev.off()
 
 ## ANOVA Tests
 
-<<<<<<< HEAD
+
+ANOVA stands for Analysis of Variance. It's a statistical test that was developed by Ronald Fisher in 1918 and has been in use ever since. Put simply, ANOVA tells you if there are any statistical differences between the means of three or more independent groups. One-way ANOVA is the most basic form.
+Tukey's Honest Significant Difference (HSD) test is a post hoc test commonly used to assess the significance of differences between pairs of group means. Tukey HSD is often a follow up to one-way ANOVA, when the F-test has revealed the existence of a significant difference between some of the tested groups..
 The `purpose` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `purpose`. We will also be doing Tuckey tests here. Again not all of the results may be useful, but we want to have them available for further consideration.
-=======
-The `purpose` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `purpose`.We will also be doing Tuckey tests here .
->>>>>>> fe57b78a10f8ebd58b427a3528031f5265cc6498
 
 ```{r results = "show"}
 aovrate=aov(int.rate ~ purpose, data = loans)
@@ -682,163 +679,25 @@ aovpubrecturkey=TukeyHSD(aovpubrec)
 aovpubrecturkey
 ```
 
-<<<<<<< HEAD
-
-## Chi Squared Tests
-
-=======
-The `credit.policy` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `credit.policy`.We will not be doing Tuckey tests here .
-
-```{r results = "show"}
-aovrate=aov(int.rate ~ credit.policy, data = loans)
-aovratesummary=summary(aovrate)
-aovratesummary
-```
-
-```{r results = "show"}
-aovinstallment=aov(installment ~ credit.policy, data = loans)
-aovinstallmentsummary=summary(aovinstallment)
-aovinstallmentsummary
-```
-
-```{r results = "show"}
-aovannual=aov(log.annual.inc ~ credit.policy, data = loans)
-aovannualsummary=summary(aovannual)
-aovannualsummary
-```
-
-```{r results = "show"}
-aovdti=aov(dti ~ credit.policy, data = loans)
-aovdtisummary=summary(aovdti)
-aovdtisummary
-```
-
-```{r results = "show"}
-aovfico=aov(fico ~ credit.policy, data = loans)
-aovficosummary=summary(aovfico)
-aovficosummary
-```
-
-```{r results = "show"}
-aovcrline=aov(days.with.cr.line ~ credit.policy, data = loans)
-aovcrlinesummary=summary(aovcrline)
-aovcrlinesummary
-```
-
-```{r results = "show"}
-aovrbal=aov(revol.bal ~ credit.policy, data = loans)
-aovrbalsummary=summary(aovrbal)
-aovrbalsummary
-```
-
-```{r results = "show"}
-aovrutil=aov(revol.util ~ credit.policy, data = loans)
-aovrutilsummary=summary(aovrutil)
-aovrutilsummary
-```
-
-```{r results = "show"}
-aov6mts=aov(inq.last.6mths ~ credit.policy, data = loans)
-aov6mtssummary=summary(aov6mts)
-aov6mtssummary
-```
-
-```{r results = "show"}
-aov2yrs=aov(delinq.2yrs ~ credit.policy, data = loans)
-aov2yrssummary=summary(aov2yrs)
-aov2yrssummary
-```
-
-```{r results = "show"}
-aovpubrec=aov(pub.rec ~ credit.policy, data = loans)
-aovpubrecsummary=summary(aovpubrec)
-aovpubrecsummary
-```
-
-The `not.fully.paid` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `not.fully.paid`.We will not be doing Tuckey tests here .
-```{r results = "show"}
-aovrate=aov(int.rate ~ not.fully.paid, data = loans)
-aovratesummary=summary(aovrate)
-aovratesummary
-```
-
-```{r results = "show"}
-aovinstallment=aov(installment ~ not.fully.paid, data = loans)
-aovinstallmentsummary=summary(aovinstallment)
-aovinstallmentsummary
-```
-
-```{r results = "show"}
-aovannual=aov(log.annual.inc ~ not.fully.paid, data = loans)
-aovannualsummary=summary(aovannual)
-aovannualsummary
-```
-
-```{r results = "show"}
-aovdti=aov(dti ~ not.fully.paid, data = loans)
-aovdtisummary=summary(aovdti)
-aovdtisummary
-```
-
-```{r results = "show"}
-aovfico=aov(fico ~ not.fully.paid, data = loans)
-aovficosummary=summary(aovfico)
-aovficosummary
-```
-
-```{r results = "show"}
-aovcrline=aov(days.with.cr.line ~ not.fully.paid, data = loans)
-aovcrlinesummary=summary(aovcrline)
-aovcrlinesummary
-```
-
-```{r results = "show"}
-aovrbal=aov(revol.bal ~ not.fully.paid, data = loans)
-aovrbalsummary=summary(aovrbal)
-aovrbalsummary
-```
-
-```{r results = "show"}
-aovrutil=aov(revol.util ~ not.fully.paid, data = loans)
-aovrutilsummary=summary(aovrutil)
-aovrutilsummary
-```
-
-```{r results = "show"}
-aov6mts=aov(inq.last.6mths ~ not.fully.paid, data = loans)
-aov6mtssummary=summary(aov6mts)
-aov6mtssummary
-```
-
-```{r results = "show"}
-aov2yrs=aov(delinq.2yrs ~ not.fully.paid, data = loans)
-aov2yrssummary=summary(aov2yrs)
-aov2yrssummary
-png("")
-```
-
-```{r results = "show"}
-aovpubrec=aov(pub.rec ~ not.fully.paid, data = loans)
-aovpubrecsummary=summary(aovpubrec)
-aovpubrecsummary
-```
 
 ## Chi Squared Test
 
-purpose vs credit policy
->>>>>>> fe57b78a10f8ebd58b427a3528031f5265cc6498
+The Chi-square test of Independence determines whether there is an association between two categorical variables i.e. whether the variables are independent or related. 
+
+chi-square test for purpose vs credit policy
+
 ```{r results = "show"}
 test = chisq.test(table(loans$purpose,loans$credit.policy))
 test
-
 test$observed
 test$expected
 test$residuals
 
 corrplot(test$residuals, is.cor = FALSE)
 ```
+Since the p-value between “purpose” and “credit policy” is less than our chosen significance level of (α = 0.05), we can reject the null hypothesis. We can conclude that there is enough evidence to suggest an association between “purpose” and “credit policy".
 
-purpose vs not fully paid
+chi-square test for purpose vs not fully paid
 
 ```{r results = "show"}
 test = chisq.test(table(loans$purpose,loans$not.fully.paid))
@@ -850,8 +709,11 @@ test$residuals
 
 corrplot(test$residuals, is.cor = FALSE)
 ```
+Since the p-value between “purpose” and “not fully paid” is less than our chosen significance level of (α = 0.05), we can reject the null hypothesis. We can conclude that there is enough evidence to suggest an association between “purpose” and “not fully paid".
 
-credit policy vs not fully paid
+
+
+chi-square test for credit policy vs not fully paid
 
 ```{r results = "show"}
 test = chisq.test(table(loans$credit.policy,loans$not.fully.paid))
@@ -863,16 +725,13 @@ test$residuals
 
 corrplot(test$residuals, is.cor = FALSE)
 ```
+Since the p-value between “credit policy” and “not fully paid” is less than our chosen significance level of (α = 0.05), we can reject the null hypothesis. We can conclude that there is enough evidence to suggest an association between “credit policy” and “not fully paid.
 
 
-<<<<<<< HEAD
-## Q-Q Plots
+## Q-Q Plots for normality test:
 
-We want to create a Q-Q plot for each numeric variable so we can perform a normality test for each.
+We want to create a Q-Q plot for each numeric variable so we can perform a normality test for each.Please, note that the easiest way to interpret the findings is how closely the data resembles the black reference line representing the normal distribution for the variable.
 
-=======
-## Q-Q Plots for normality test
->>>>>>> fe57b78a10f8ebd58b427a3528031f5265cc6498
 ```{r}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a Q-Q plot
 # for each variable using the facet_wrap() function in ggplot2.
@@ -889,7 +748,7 @@ loans %>%
 ```
 
 
-# Conclusion and Next Steps
+# CONCLUSION AND NEXT STEPS:
 
 Risks to our analysis and opportunities for future analyses:
 
@@ -901,7 +760,7 @@ By 2017, shortly after the peak of the P2P industry, larger institutions and ban
 
 ## Revolving Balance
 
-While the annual income data was given to us as a log, the revolving balance was given to use unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result that looks more normal, but encountered an issue. There are some loans with `revol.bal` value of 0, and when you take the log of that you get -Inf. We will need to decide how to handle this in the future. Fow now, we want to demonstrate the results of taking the log of `revol.bal`.
+While the annual income data was given to us as a log, the revolving balance was given to use unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result that looks more normal, but encountered an issue. There are some loans with `revol.bal` value of 0, and when you take the log of that you get -Inf. We will need to decide how to handle this in the future. For now, we want to demonstrate the results of taking the log of `revol.bal`and how it increases the readability of the data and the variable resebles a normal distribution when is always a good characteristics for further modelling.
 
 ```{r}
 loans$revol.bal=log(loans$revol.bal)
@@ -986,12 +845,10 @@ loans %>%
 
 # ANNEXURE:
 
-<<<<<<< HEAD
-We performed z-interval tests for each variable, but decided that t-interval was more appropriate. We are keeping the code here so that we don't lose the work.
+We performed z-interval tests for each variable, but decided that t-interval was more appropriate. We are keeping the code here so that we don't lose the work.Please note that in this case z test is not appropriate because we do not have an idea about the standard deviation of the population. However, in order to better understand the working algorithm of the statistical tests especially the z-score or the z-statistics and how it compares to the t-statistics.
 
-=======
 ## Z-tests:
->>>>>>> fe57b78a10f8ebd58b427a3528031f5265cc6498
+
 ```{r results = "show"}
 loans$revol.bal=exp(loans$revol.bal)
 # This code will perform the z-interval tests we want, but  we will show the results in a nicer looking table format
@@ -1010,7 +867,7 @@ dev.off()
 ```
 
 
-```{r}
+```{r results = "show"}
 ztest95installment = z.test(x=loans$installment, sigma.x = 2.31) # default conf.level = 0.95
 ztest99installment = z.test(x=loans$installment, sigma.x = 2.31, conf.level=0.99 )
 ztest50installment = z.test(x=loans$installment, sigma.x = 2.31, conf.level=0.50 )
@@ -1023,7 +880,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
+```{r results = "show"}
 ztest95annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31) # default conf.level = 0.95
 ztest99annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31, conf.level=0.99 )
 ztest50annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31, conf.level=0.50 )
@@ -1036,7 +893,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
+```{r results = "show"}
 ztest95fico = z.test(x=loans$fico, sigma.x = 2.31) # default conf.level = 0.95
 ztest99fico = z.test(x=loans$fico, sigma.x = 2.31, conf.level=0.99 )
 ztest50fico = z.test(x=loans$fico, sigma.x = 2.31, conf.level=0.50 )
@@ -1049,7 +906,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
+```{r results = "show"}
 ztest95dti = z.test(x=loans$dti, sigma.x = 2.31) # default conf.level = 0.95
 ztest99dti = z.test(x=loans$dti, sigma.x = 2.31, conf.level=0.99 )
 ztest50dti = z.test(x=loans$dti, sigma.x = 2.31, conf.level=0.50 )
@@ -1062,7 +919,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
+```{r results = "show"}
 ztest95days.with.cr.line = z.test(x=loans$days.with.cr.line, sigma.x = 2.31) # default conf.level = 0.95
 ztest99days.with.cr.line = z.test(x=loans$days.with.cr.line, sigma.x = 2.31, conf.level=0.99 )
 ztest50days.with.cr.line = z.test(x=loans$days.with.cr.line, sigma.x = 2.31, conf.level=0.50 )
@@ -1075,7 +932,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
+```{r results = "show"}
 ztest95revol.bal = z.test(x=loans$revol.bal, sigma.x = 2.31) # default conf.level = 0.95
 ztest99revol.bal = z.test(x=loans$revol.bal, sigma.x = 2.31, conf.level=0.99 )
 ztest50revol.bal = z.test(x=loans$revol.bal, sigma.x = 2.31, conf.level=0.50 )
@@ -1088,7 +945,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
+```{r results = "show"}
 ztest95revol.util = z.test(x=loans$revol.util, sigma.x = 2.31) # default conf.level = 0.95
 ztest99revol.util = z.test(x=loans$revol.util, sigma.x = 2.31, conf.level=0.99 )
 ztest50revol.util = z.test(x=loans$revol.util, sigma.x = 2.31, conf.level=0.50 )
@@ -1101,7 +958,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
+```{r results = "show"}
 ztest95inq.last.6mths = z.test(x=loans$inq.last.6mths, sigma.x = 2.31) # default conf.level = 0.95
 ztest99inq.last.6mths = z.test(x=loans$inq.last.6mths, sigma.x = 2.31, conf.level=0.99 )
 ztest50inq.last.6mths = z.test(x=loans$inq.last.6mths, sigma.x = 2.31, conf.level=0.50 )
@@ -1114,8 +971,8 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
-ztest95delinq.2yrs = z.test(x=loans$delinq.2yrs, sigma.x = 2.31) # default conf.level = 0.95
+```{r results = "show"}
+ztest95delinq.2yrs = z.test(x=loans$delinq.2yrs, sigma.x = 2.31)# default conf.level = 0.95
 ztest99delinq.2yrs = z.test(x=loans$delinq.2yrs, sigma.x = 2.31, conf.level=0.99 )
 ztest50delinq.2yrs = z.test(x=loans$delinq.2yrs, sigma.x = 2.31, conf.level=0.50 )
 
@@ -1127,7 +984,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r}
+```{r results = "show"}
 ztest95pub.rec = z.test(x=loans$pub.rec, sigma.x = 2.31) # default conf.level = 0.95
 ztest99pub.rec = z.test(x=loans$pub.rec, sigma.x = 2.31, conf.level=0.99 )
 ztest50pub.rec = z.test(x=loans$pub.rec, sigma.x = 2.31, conf.level=0.50 )
@@ -1139,65 +996,3 @@ p<-tableGrob(tab)
 grid.arrange(p)
 dev.off()
 ```
-<<<<<<< HEAD
-=======
-
-## Scatter-plots:
-```{r}
-plot(loans$int.rate,loans$installment,pch=1,col='pink')
-plot(loans$int.rate,loans$log.annual.in,pch=1,col='pink')
-plot(loans$int.rate,loans$dti,pch=1,col='pink')
-plot(loans$int.rate,loans$fico,pch=1,col='pink')
-plot(loans$int.rate,loans$days.with.cr.line,pch=1,col='pink')
-plot(loans$int.rate,loans$revol.bal,pch=1,col='pink')
-plot(loans$int.rate,loans$revol.util,pch=1,col='pink')
-plot(loans$int.rate,loans$inq.last.6mths,pch=1,col='pink')
-plot(loans$int.rate,loans$delinq.2yr,pch=1,col='pink')
-plot(loans$int.rate,loans$pub.rec,pch=1,col='pink')
-plot(loans$installment,loans$log.annual.in,pch=1,col='pink')
-plot(loans$installment,loans$dti,pch=1,col='pink')
-plot(loans$installment,loans$fico,pch=1,col='pink')
-plot(loans$installment,loans$days.with.cr.line,pch=1,col='pink')
-plot(loans$installment,loans$revol.bal,pch=1,col='pink')
-plot(loans$installment,loans$revol.util,pch=1,col='pink')
-plot(loans$installment,loans$inq.last.6mths,pch=1,col='pink')
-plot(loans$installment,loans$delinq.2yr,pch=1,col='pink')
-plot(loans$installment,loans$pub.rec,pch=1,col='pink')
-plot(loans$log.annual.inc,loans$dti,pch=1,col='pink')
-plot(loans$log.annual.inc,loans$fico,pch=1,col='pink')
-plot(loans$log.annual.inc,loans$days.with.cr.line,pch=1,col='pink')
-plot(loans$log.annual.inc,loans$revol.bal,pch=1,col='pink')
-plot(loans$log.annual.inc,loans$revol.util,pch=1,col='pink')
-plot(loans$log.annual.inc,loans$inq.last.6mths,pch=1,col='pink')
-plot(loans$log.annual.inc,loans$delinq.2yrs,pch=1,col='pink')
-plot(loans$log.annual.inc,loans$pub.rec,pch=1,col='pink')
-plot(loans$dti,loans$fico,pch=1,col='pink')
-plot(loans$dti,loans$days.with.cr.line,pch=1,col='pink')
-plot(loans$dti,loans$revol.bal,pch=1,col='pink')
-plot(loans$dti,loans$revol.util,pch=1,col='pink')
-plot(loans$dti,loans$inq.last.6mths,pch=1,col='pink')
-plot(loans$dti,loans$delinq.2yrs,pch=1,col='pink')
-plot(loans$dti,loans$pub.rec,pch=1,col='pink')
-plot(loans$fico,loans$days.with.cr.line,pch=1,col='pink')
-plot(loans$fico,loans$revol.bal,pch=1,col='pink')
-plot(loans$fico,loans$revol.util,pch=1,col='pink')
-plot(loans$fico,loans$inq.last.6mths,pch=1,col='pink')
-plot(loans$fico,loans$delinq.2yrs,pch=1,col='pink')
-plot(loans$fico,loans$pub.rec,pch=1,col='pink')
-plot(loans$days.with.cr.line,loans$revol.bal,pch=1,col='pink')
-plot(loans$days.with.cr.line,loans$revol.util,pch=1,col='pink')
-plot(loans$days.with.cr.line,loans$inq.last.6mths,pch=1,col='pink')
-plot(loans$days.with.cr.line,loans$delinq.2yr,pch=1,col='pink')
-plot(loans$days.with.cr.line,loans$pub.rec,pch=1,col='pink')
-plot(loans$revol.bal,loans$revol.util,pch=1,col='pink')
-plot(loans$revol.bal,loans$inq.last.6mths,pch=1,col='pink')
-plot(loans$revol.bal,loans$delinq.2yr,pch=1,col='pink')
-plot(loans$revol.bal,loans$pub.rec,pch=1,col='pink')
-plot(loans$revol.util,loans$inq.last.6mths,pch=1,col='pink')
-plot(loans$revol.util,loans$delinq.2yr,pch=1,col='pink')
-plot(loans$revol.util,loans$pub.rec,pch=1,col='pink')
-plot(loans$inq.last.6mths,loans$delinq.2yr,pch=1,col='pink')
-plot(loans$inq.last.6mths,loans$pub.rec,pch=1,col='pink')
-plot(loans$delinq.2yrs,loans$pub.rec,pch=1,col='pink')
-```
->>>>>>> fe57b78a10f8ebd58b427a3528031f5265cc6498
