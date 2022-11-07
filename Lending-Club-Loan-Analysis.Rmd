@@ -428,12 +428,12 @@ loans %>%
 
 
 
-# Statistical Tests
+# STATISTICAL TEST:
 Interpretation^[https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[https://www.debt.org/credit/loans/personal/lending-club-review/] ^[https://nycdatascience.com/blog/student-works/lendingclub-profitability-predictions/] ^[https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
 
 
 
-
+## T-tests:
 ```{r results = "show"}
 
 library(broom)
@@ -585,7 +585,7 @@ dev.off()
 
 ## ANOVA Tests
 
-The `purpose` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `purpose`, doing Tuckey tests where appropriate.
+The `purpose` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `purpose`.We will also be doing Tuckey tests here .
 
 ```{r results = "show"}
 aovrate=aov(int.rate ~ purpose, data = loans)
@@ -676,6 +676,8 @@ aovpubrecturkey=TukeyHSD(aovpubrec)
 aovpubrecturkey
 ```
 
+The `credit.policy` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `credit.policy`.We will not be doing Tuckey tests here .
+
 ```{r results = "show"}
 aovrate=aov(int.rate ~ credit.policy, data = loans)
 aovratesummary=summary(aovrate)
@@ -742,6 +744,7 @@ aovpubrecsummary=summary(aovpubrec)
 aovpubrecsummary
 ```
 
+The `not.fully.paid` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `not.fully.paid`.We will not be doing Tuckey tests here .
 ```{r results = "show"}
 aovrate=aov(int.rate ~ not.fully.paid, data = loans)
 aovratesummary=summary(aovrate)
@@ -811,7 +814,7 @@ aovpubrecsummary
 
 ## Chi Squared Test
 
-
+purpose vs credit policy
 ```{r results = "show"}
 test = chisq.test(table(loans$purpose,loans$credit.policy))
 test
@@ -830,6 +833,8 @@ library(corrplot)
 corrplot(test$residuals, is.cor = FALSE)
 ```
 
+purpose vs not fully paid
+
 ```{r results = "show"}
 test = chisq.test(table(loans$purpose,loans$not.fully.paid))
 test
@@ -847,6 +852,8 @@ test$residuals
 library(corrplot)
 corrplot(test$residuals, is.cor = FALSE)
 ```
+
+credit policy vs not fully paid
 
 ```{r results = "show"}
 test = chisq.test(table(loans$credit.policy,loans$not.fully.paid))
@@ -867,7 +874,7 @@ corrplot(test$residuals, is.cor = FALSE)
 ```
 
 
-## Q-Q Plots
+## Q-Q Plots for normality test
 ```{r}
 loans %>%
   select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
@@ -975,6 +982,7 @@ loans %>%
 
 # ANNEXURE:
 
+## Z-tests:
 ```{r results = "show"}
 loans$revol.bal=exp(loans$revol.bal)
 # This code will perform the z-interval tests we want, but  we will show the results in a nicer looking table format
@@ -1125,6 +1133,7 @@ grid.arrange(p)
 dev.off()
 ```
 
+## Scatter-plots:
 ```{r}
 plot(loans$int.rate,loans$installment,pch=1,col='pink')
 plot(loans$int.rate,loans$log.annual.in,pch=1,col='pink')
