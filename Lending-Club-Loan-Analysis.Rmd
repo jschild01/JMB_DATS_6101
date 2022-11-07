@@ -260,7 +260,7 @@ loans %>%
 From this we can see that the `purpose` variable would be a good candidate to perform ANOVA tests on. 
 
 
-## Try the easy solution first
+## 8.Try the easy solution first
 Let's try the easy way of looking at meeting the credit underwriting criteria vs the borrower fully paying. We can group by the credit.policy variable, and calculate the percentage of borrowers in each category who did not fully pay.
 ```{r results = "Show"}
 # We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
@@ -278,7 +278,7 @@ From this we can see that about 13.2% of borrowers who met the credit underwriti
 This indicates borrowers who did not meet the credit underwriting criteria were almost twice as likely to be default on their loans than those who did meet the criteria. For comparison, default rates on loans from commercial banks for the same period as our dataset averaged 4.48%, with a maximum default rate of 7.49% default rate towards the end of 2009, according to the St. Louis Federal Reserve Bank.^[https://fred.stlouisfed.org/series/DRALACBN#]
 
 
-## Follow up
+## 9.Follow up
 
 Let us go back to the table of data definitions and add a column for the variable type.
 
@@ -307,6 +307,8 @@ loans$purpose <- as.factor(loans$purpose)
 Now we can further explore the data to see how the numeric variables differ based on the on the `credit.policy`, `not.fully.paid`, and `purpose` variables. Let's make some boxplots to visualize this.
 
 ### Additional Boxplots
+
+Here, we look at the numeric variables with for indiviual sub-categories of the logical and categorical variables. This helps us comprehensively understand how the numerical variables are distributed with respect to each of thecategorical values.
 ```{r}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
 # for each variable using the facet_wrap() function in ggplot2. We can see this for each credit policy value by excluding
@@ -355,8 +357,9 @@ loans %>%
 ```
 
 
-### Covariance Matrix
+### Covariance Matrix:
 
+This is the first and primary statistical measure to understand the relationship between the variablesand howchange in one might affect the other.
 ```{r results = "show"}
 loans_covarience_matrix <- loans %>%
   select(-purpose) %>%
@@ -369,7 +372,9 @@ dev.off()
 ```
 
 
-### Correlation Matrix and Heatmap
+### Correlation Matrix and Heatmap:
+
+A correlation matrix is a table showing correlation coefficients between variables. Each cell in the table shows the correlation between two variables. A correlation matrix is used to summarize data, as an input into a more advanced analysis, and as a diagnostic for advanced analyses.A heat map is a data visualization technique that shows magnitude of a phenomenon as color in two dimensions. The variation in color may be by hue or intensity, giving obvious visual cues to the reader about how the phenomenon is clustered or varies over space.
 
 ```{r fig.width=7, fig.height=7}
 # For our correlation matrix we want to include everything but the purpose variable
@@ -760,7 +765,7 @@ By 2017, shortly after the peak of the P2P industry, larger institutions and ban
 
 ## Revolving Balance
 
-While the annual income data was given to us as a log, the revolving balance was given to use unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result that looks more normal, but encountered an issue. There are some loans with `revol.bal` value of 0, and when you take the log of that you get -Inf. We will need to decide how to handle this in the future. For now, we want to demonstrate the results of taking the log of `revol.bal`and how it increases the readability of the data and the variable resebles a normal distribution when is always a good characteristics for further modelling.
+While the annual income data was given to us as a log, the revolving balance was given to use unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result that looks more normal, but encountered an issue. There are some loans with `revol.bal` value of 0, and when you take the log of that you get -Inf. We will need to decide how to handle this in the future. For now, we want to demonstrate the results of taking the log of `revol.bal`and how it increases the readability of the data and the variable resembles a normal distribution when is always a good characteristics for further modelling.
 
 ```{r}
 loans$revol.bal=log(loans$revol.bal)
