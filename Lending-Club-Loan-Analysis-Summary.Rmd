@@ -673,12 +673,14 @@ grid.arrange(p)
 dev.off()
 ```
 
+
+Note: While conducting t test our most significant inference is that the means of all the variables of the popoplation coenside with the means of our sample. 
 ## ANOVA Tests
 
 
 ANOVA stands for Analysis of Variance. It's a statistical test that was developed by Ronald Fisher in 1918 and has been in use ever since. Put simply, ANOVA tells you if there are any statistical differences between the means of three or more independent groups. One-way ANOVA is the most basic form.
 Tukey's Honest Significant Difference (HSD) test is a post hoc test commonly used to assess the significance of differences between pairs of group means. Tukey HSD is often a follow up to one-way ANOVA, when the F-test has revealed the existence of a significant difference between some of the tested groups..
-The `purpose` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `purpose`. We will also be doing Tuckey tests here. Again not all of the results may be useful, but we want to have them available for further consideration.
+The `purpose` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `purpose`. We will also be doing Tukey tests here. Again not all of the results may be useful, but we want to have them available for further consideration.
 
 ```{r results = "show"}
 aovrate=aov(int.rate ~ purpose, data = loans)
@@ -687,7 +689,7 @@ aovratesummary
 aovrateturkey=TukeyHSD(aovrate)
 aovrateturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean rate of interest varies significantly.However, while conducting tukey test we see that not a significant difference in mean interest rate doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aovinstallment=aov(installment ~ purpose, data = loans)
 aovinstallmentsummary=summary(aovinstallment)
@@ -695,7 +697,7 @@ aovinstallmentsummary
 aovinstallmentturkey=TukeyHSD(aovinstallment)
 aovinstallmentturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean installment payment varies significantly.However, while conducting tukey test we see that not a significant difference in mean installment payment income doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aovannual=aov(log.annual.inc ~ purpose, data = loans)
 aovannualsummary=summary(aovannual)
@@ -703,7 +705,7 @@ aovannualsummary
 aovannualturkey=TukeyHSD(aovannual)
 aovannualturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean log of annual income varies significantly.However, while conducting tukey test we see that not a significant difference in mean log of annual income doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aovdti=aov(dti ~ purpose, data = loans)
 aovdtisummary=summary(aovdti)
@@ -711,7 +713,7 @@ aovdtisummary
 aovdtiturkey=TukeyHSD(aovdti)
 aovdtiturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean debt to income ratio varies significantly.However, while conducting tukey test we see that not a significant difference in mean debt to income ratio doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aovfico=aov(fico ~ purpose, data = loans)
 aovficosummary=summary(aovfico)
@@ -719,7 +721,7 @@ aovficosummary
 aovficoturkey=TukeyHSD(aovfico)
 aovficoturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean FICO score varies significantly.However, while conducting tukey test we see that not a significant difference in mean FICO score doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aovcrline=aov(days.with.cr.line ~ purpose, data = loans)
 aovcrlinesummary=summary(aovcrline)
@@ -727,7 +729,7 @@ aovcrlinesummary
 aovcrlineturkey=TukeyHSD(aovcrline)
 aovcrlineturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean credit line varies significantly.However, while conducting tukey test we see that not a significant difference in mean credit line doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aovrbal=aov(revol.bal ~ purpose, data = loans)
 aovrbalsummary=summary(aovrbal)
@@ -735,7 +737,7 @@ aovrbalsummary
 aovrbalturkey=TukeyHSD(aovrbal)
 aovrbalturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean revolving balance varies significantly.However, while conducting tukey test we see that not a significant difference in mean revolving balance doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aovrutil=aov(revol.util ~ purpose, data = loans)
 aovrutilsummary=summary(aovrutil)
@@ -743,7 +745,7 @@ aovrutilsummary
 aovrutilturkey=TukeyHSD(aovrutil)
 aovrutilturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean ........... varies significantly.However, while conducting tukey test we see that not a significant difference in mean ............ doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aov6mts=aov(inq.last.6mths ~ purpose, data = loans)
 aov6mtssummary=summary(aov6mts)
@@ -751,7 +753,7 @@ aov6mtssummary
 aov6mtsturkey=TukeyHSD(aov6mts)
 aov6mtsturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean ....... income varies significantly.However, while conducting tukey test we see that not a significant difference in mean ........ doesn't exist between all the categories of purpose.
 ```{r results = "show"}
 aov2yrs=aov(delinq.2yrs ~ purpose, data = loans)
 aov2yrssummary=summary(aov2yrs)
@@ -759,7 +761,7 @@ aov2yrssummary
 aov2yrsturkey=TukeyHSD(aov2yrs)
 aov2yrsturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is more than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean ....... doesnt varies significantly and while conducting tukey test we see that out previous findings are confirmed
 ```{r results = "show"}
 aovpubrec=aov(pub.rec ~ purpose, data = loans)
 aovpubrecsummary=summary(aovpubrec)
@@ -767,7 +769,7 @@ aovpubrecsummary
 aovpubrecturkey=TukeyHSD(aovpubrec)
 aovpubrecturkey
 ```
-
+Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean public records varies significantly.However, while conducting tukey test we see that not a significant difference in mean public records doesn't exist between all the categories of purpose.
 
 ## Chi Squared Test
 
