@@ -1,16 +1,20 @@
 ---
 title: "LendingClub Peer-to-Peer Loan Analysis"
 author: "Jonathan Schild, Medhasweta Sen, Brian Gulko"
-date: '`r Sys.Date()`'
+date: "`r Sys.Date()`"
+always_allow_html: true
 output:
   html_document:
     code_folding: hide
-    number_sections: true
+    number_sections: yes
     toc: yes
     toc_depth: 3
     toc_float: yes
   pdf_document:
     toc: yes=
+    toc_depth: '3'
+  word_document:
+    toc: no
     toc_depth: '3'
 ---
 
@@ -62,7 +66,7 @@ The P2P market was dominated by LendingClub during the early rise of P2P lending
 ## Our Data
 Our dataset contains over 9,500 observations of loan data from LendingClub from between 2007 and 2015. We obtained the dataset from Kaggle here and can be accessed at: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
 
-Below are the variables in the dataset and their accompanying definitions *'as supplied by Kaggle?*:
+Below are the variables in the dataset and their accompanying definitions as supplied by Kaggle?:
 
 ```{r results = "show", echo=FALSE}
 # This is copied form the Kaggle site
@@ -112,9 +116,11 @@ We will seek to answer few of the following questions:
 3.	Do borrowers who meet the credit underwriting criteria have a lower chance of not fully repaying the loan? If so, how big of a difference is it, and is it statistically significant?
 
 ## First Look
-Brian: I think we can take the following 2 lines out.
-We start by loading the tidyverse and ezids libraries^[Our code requires the tidyverse and ezids libraries.] and reading on our dataset.
-Please note we also require packages corrplot and scale to efficiently conduct our EDA.If we require any other packages we will import them along the way.
+
+--We start by loading the tidyverse and ezids libraries^[Our code requires the tidyverse and ezids libraries.] and reading on our dataset.
+Please note we also require packages corrplot and scale to efficiently conduct our EDA.If we require any other packages we will import them along the way.--
+
+For our analysis we will use the ezids, tidyverse, corrplot, scales, gridExtra, expss, and knitr libraries. *Additional libraries??*
 
 ```{r include=FALSE}
 library(ezids) # We will use functions form this package to get nicer looking results
@@ -164,7 +170,7 @@ Below are some descriptive statistics of the variables to help us better underst
 xkablesummary(loans)
 ```
 
-From this we can see that some of the variables that appeared to be logicals, like inq.last.6mths, delinq.2yrs, and pub.rec are actually not. However,credit.policy and not.fully.paid is.
+From this we can see that some of the variables that appeared to be logicals, like `inq.last.6mths`, `delinq.2yrs`, and `pub.rec` are actually not. However, `credit.policy` and `not.fully.paid` are.
 
 We have an idea of what to expect for a few variables, such as interest rate and credit score, so we were able to test the dataset against some of our expectations to gauge its reliability. By inspecting the summary table, we can see that interest rates for the data are between `r paste0(min(loans$int.rate)*100,"%")` and `r paste0(max(loans$int.rate)*100,"%")` and credit scores range from `r min(loans$fico)` to `r max(loans$fico)`. Although interest rates might seem to reach excessively high rates or credit scores too meager, the P2P market tended to consist of more risky loans. This aligns with our expectation and reinforces our confidence in the dataset. 
 
@@ -199,8 +205,7 @@ standard_deviations <- tibble(Variable = colnames(loans),
 kable(standard_deviations)
 ```
 
-
-Brian: What do these standard deviations tell us about the data?
+*Brian: What do these standard deviations tell us about the data?*
 
 We are satisfied with the data so far, so the next step is to begin visualizing it.
 
@@ -222,8 +227,9 @@ loans %>%
   theme_minimal()
 ```
 
-Some of these variables look somewhat normal, and it would make sense to create a QQ-Plot for them.
-Brian: I'll add some more text here going over what we said in the presentation.
+One of the primary things we are looking for, normality, we can see with the `log.annual.inc` variable. Some other variables look at least somewhat normal, such as `days.with.cr.line`, `fico`, `installment`, and `int.rate`. We will make QQ-plots later to get a better sense of the normality of these variables.
+
+The `revol.util` variable is fairly flat, and the `dti` a little more rounded, but not normal looking. There are 4 variables where we clearly have outlier issues: `delinq.2yrs`, `inq.last.6.mths`, `pub.rec`, and `revol.bal`. For those we can see one or a small number of large bars on the left, and then a fairly flat graph around zero after that.
 
 To help get a better look at the outliers, below are boxplots for the same variables:
 ```{r fig.width=8, echo=FALSE}
@@ -242,8 +248,11 @@ loans %>%
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 ```
 
-Some of these variables have issues with outliers.
-Brian: I'll add some more text here going over what we said in the presentation.
+Setting the outlier alpha to 0.2 to compensate for overplotting, we can now get a better understanding of the four variables with outlier issues. For `delinq.2yrs` and `public.rec`, nearly all of the observations are 0, with a small number of outliers at integer values above zero. It looks like these two variables will not be very useful to us.
+
+The `inq.last.6mths` does have some range, with most observations one of 0, 1, or 2. We can consider taking out the outliers later on, and hopefully this variable will prove useful.
+
+The `revol.bal` variable actually has a good range, but the outliers are so far out that it is difficult to see. For this variable we’ll want to consider removing outliers and possible transforming the data by taking the natural log of it, like was already done with the `annual.inc` variable.
 
 We can take a look at the factor and logical variables with bar charts:
 ```{r fig.width=8, echo=FALSE}
@@ -276,7 +285,7 @@ Now we can further explore the data to see how the numeric variables differ base
 
 ## Additional Boxplots
 
-Here, we look at the numeric variables for indiviual sub-categories of the logical and categorical variables. This helps us comprehensively understand how the numerical variables are distributed with respect to each of the logical and categorical values.
+Here, we look at the numeric variables for individual sub-categories of the logical and categorical variables. This helps us comprehensively understand how the numerical variables are distributed with respect to each of the logical and categorical values.
 ```{r echo=FALSE}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
 # for each variable using the facet_wrap() function in ggplot2. We can see this for each credit policy value by excluding
@@ -294,7 +303,7 @@ loans %>%
   theme_minimal()
 ```
 
-Brian: I'll add some more text here going over what we said in the presentation.
+Looking at this there are a few numeric variables that look fairly different depending on credit.policy: fico, inq.last.6.mths, and int.rate.
 
 ```{r echo=FALSE}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
@@ -313,7 +322,7 @@ loans %>%
   theme_minimal()
 ```
 
-Brian: I'll add some more text here going over what we said in the presentation.
+Looking at this there aren’t any variables that visually stand out to a significant degree.
 
 ```{r echo=FALSE}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
@@ -332,10 +341,12 @@ loans %>%
   theme_minimal()
 ```
 
-Brian: I'll add some more text here going over what we said in the presentation.
+From this we can see some of the purpose categories stand out for certain variables. Debt_consolidation and credit_card stand out for dti and revol.util. small_business stands out for installment and int.rate. We will perform ANOVA tests later to confirm what we can see here.
 
 
 ## Covariance Matrix
+*Brian: Remove this section??*
+
 This is the first and primary statistical measure to understand the relationship between the variables and how changes in one might affect the other.
 ```{r results = "show", echo=FALSE}
 # Brian: should we include this?
@@ -353,8 +364,7 @@ dev.off()
 
 ## Correlation Matrix
 
-Brian: I think we can take out this text explaining what these are.
-A correlation matrix is a table showing correlation coefficients between variables. Each cell in the table shows the correlation between two variables. A correlation matrix is used to summarize data, as an input into a more advanced analysis, and as a diagnostic for advanced analyses. A heat map is a data visualization technique that shows magnitude of a phenomenon as color in two dimensions. The variation in color may be by hue or intensity, giving obvious visual cues to the reader about how the phenomenon is clustered or varies over space.
+--A correlation matrix is a table showing correlation coefficients between variables. Each cell in the table shows the correlation between two variables. A correlation matrix is used to summarize data, as an input into a more advanced analysis, and as a diagnostic for advanced analyses. A heat map is a data visualization technique that shows magnitude of a phenomenon as color in two dimensions. The variation in color may be by hue or intensity, giving obvious visual cues to the reader about how the phenomenon is clustered or varies over space.--
 
 
 The correlation plot below gives an overview of how each of the variables in the dataset may relate to each other. This plot includes every variable the `purpose` variable.
@@ -373,8 +383,7 @@ dev.off()
 corrplot.mixed(loans_correlation_matrix, tl.pos = "lt")
 ```
 
-This allows us to quantify some of the stand-outs in the aditional boxplots such as ____. We now have a quantifiable value for how they relate to each other.
-Brian: I'll add some more text here going over what we said in the presentation.
+This allows us to quantify some of the stand-outs in the additional boxplots such as `int.rate`, `fico`, and `inq.last.6mths` compared to `credit.score.` There are also four other correlations that are either greater than 0.4 or less than -0.4 that we want to explore further.
 
 
 ## Scatter Plots
@@ -391,7 +400,7 @@ loans %>%
   theme_minimal()
 ```
 
-Brian: I'll add some more text here going over what we said in the presentation.
+Using an alpha to 0.2 to compensate for overplotting we can see a clear trend of interest rates falling as the borrower’s FICO score goes up, which matches our expectations. All of the FICO scores end in 2 or 7, which is why the results fall into vertical lines.
 
 ```{r echo=FALSE}
 loans %>%
@@ -404,7 +413,7 @@ loans %>%
   theme_minimal()
 ```
 
-Brian: I'll add some more text here going over what we said in the presentation.
+Here we can see that as the borrower’s interest rate climbs, so does the revolving line utilization rate. This makes sense because we would expect a higher interest rate to be associated with a more risky loan. If the loan is riskier the borrower probably has more difficulty getting credit, and therefore would make use of a higher percentage of the credit they do have available.
 
 ```{r echo=FALSE}
 loans %>%
@@ -415,7 +424,7 @@ loans %>%
   theme_minimal()
 ```
 
-Brian: I'll add some more text here going over what we said in the presentation.
+As the natural log of the borrower’s annual income increases, we see that the installment of their loan does as well. This also matches our expectations, as those who make more money would likely be able to borrow larger amounts.
 
 ```{r echo=FALSE}
 loans %>%
@@ -428,7 +437,7 @@ loans %>%
   theme_minimal()
 ```
 
-Brian: I'll add some more text here going over what we said in the presentation.
+We see that as the borrower’s FICO score goes up, their revolving line utilization rate decreases, related to the explanations from the above scatter plots. In the end, this also matches our expectations.
 
 
 ## Last EDA Steps
@@ -467,8 +476,6 @@ data_definitions_augmented <- data_definitions %>%
 # We will use a kable table for simplicity
 kable(data_definitions_augmented)
 ```
-
-Brian: I stopped here
 
 
 
