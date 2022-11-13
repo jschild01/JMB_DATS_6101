@@ -45,7 +45,7 @@ knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 ```
 
 # Introduction
-Peer-to-peer (P2P) lending was a phenomenon less than ten years ago, exploding in popularity by offering a break from traditional banking. Individuals flocked to these alternative credit markets to finance their small business ventures, home purchases, and to consolidate debt. Although direct P2P lending has undergone changes over recent years, it remains a viable option for borrowers and investors. The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[https://www.precedenceresearch.com/peer-to-peer-lending-market] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. *INSERT THESIS-like STATEMENT: We will show...also call out lendingclub here somehow* 
+Peer-to-peer (P2P) lending was a phenomenon less than ten years ago, exploding in popularity by offering a break from traditional banking. Individuals flocked to these alternative credit markets to finance their small business ventures, home purchases, and to consolidate debt. Although direct P2P lending has undergone changes over recent years, it remains a viable option for borrowers and investors. The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[https://www.precedenceresearch.com/peer-to-peer-lending-market] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. Analysis and statistical testing identifies credit policy and borrowers’ failure to fully pay as variables of interest that should be considered in future in-depth analyses.  
 
 ## What is P2P Lending?
 P2P lending is the provision of financing without a traditional bank as the source of funds; it is, like it sounds, peers lending money to their peers. Instead of banks, online lending platforms provide a service that connects willing lenders, or investors, with individuals seeking to borrow funds. Historically, these investors have been predominantly private individuals seeking alternate forms of investments, wherein they receive the interest earned on the money they loan out.
@@ -56,12 +56,23 @@ Borrowers, on the other hand, are connected to feasible funding that they might 
 
 
 ## Introducing LendingClub
-![image](Lendingc-1036x200.png) 
-
 The P2P market was dominated by LendingClub during the early rise of P2P lending, and it remains a leader in the industry. It makes money by charging borrowers an origination fee, charging investors a service fee, and selling loans in secondary markets. LendingClub’s typical annual percentage rate (APR) is between 5.99% and 35.89% while the origination fee of 1% to 6% is taken off the top of loans. Borrowers on LendingClub typically have good-to-excellent credit (700 credit score) and a low debt-to-income ratio. 
  
 ![image](Picture 1.png) 
 
+
+# Exploratory Data Analysis or EDA
+Our exploratory data analysis will closely adhere to the below 9-step checklist presented in Chapter 4 of *The Art of Data Science*.^[Peng, Roger D., and Elizabeth Matsui. “Chapter 4.” The Art of Data Science: A Guide for Anyone Who Works with Data, Skybrude Consulting LLC, Victoria, 2016, pp. 33–33.] 
+
+1. Formulate our question
+2. Read in our data
+3. Check the packaging
+4. Look at the top and the bottom of your data
+5. Check your "n"s
+6. Validate with at least one external data source
+7. Make a plot
+8. Try the easy solution first
+9. Follow up
 
 ## Our Data
 Our dataset contains over 9,500 observations of loan data from LendingClub from between 2007 and 2015. We obtained the dataset from Kaggle here and can be accessed at: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
@@ -89,21 +100,6 @@ data_definitions <- data.frame(Variable = c("credit.policy", "purpose", "int.rat
 
 knitr::kable(data_definitions)
 ```
-
-
-# Exploratory Data Analysis or EDA
-
-Our exploratory data analysis will closely adhere to the below 9-step^[Back to original] checklist presented in Chapter 4 of *The Art of Data Science*.^[Peng, Roger D., and Elizabeth Matsui. “Chapter 4.” The Art of Data Science: A Guide for Anyone Who Works with Data, Skybrude Consulting LLC, Victoria, 2016, pp. 33–33.] 
-
-1. Formulate our question
-2. Read in our data
-3. Check the packaging
-4. Look at the top and the bottom of your data
-5. Check your "n"s
-6. Validate with at least one external data source
-7. Make a plot
-8. Try the easy solution first
-9. Follow up
 
 
 ## SMART Question
@@ -479,17 +475,11 @@ kable(data_definitions_augmented)
 
 
 
-# STATISTICAL TEST:
-Interpretation^[https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[https://www.debt.org/credit/loans/personal/lending-club-review/] ^[https://nycdatascience.com/blog/student-works/lendingclub-profitability-predictions/] ^[https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
+# Statistical Tests
+We conducted and performed Q-Q plots, ANOVAs, and chi-squared tests to examine the variables in our dataset and gain a better understanding of how they interact with each other. Additionally, t-tests confirm that the means of all the variables of the sample coincide with the means of our population.^[End to end case study (classification): Lending Club Data. (n.d.). Retrieved November 13, 2022, from https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[Yiu, T. (2019, June 19). Turning Lending Club’s Worst Loans into Investment Gold. Medium. https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[Lending Club Review: How it Works, Requirements and Alternatives. (n.d.). Debt.org. https://www.debt.org/credit/loans/personal/lending-club-review/] ^[Project 1: Analysis of Lending Club’s data. (n.d.). Data Science Blog. Retrieved November 13, 2022, from https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[Ph.D, M. K. (2019, April 9). LendingClub: bias in data? Machine learning and investment strategy. Retrieved November 13, 2022, from Medium website: https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
 
 
-## T-Tests
-
-T-tests confirm that the means of all of the variables of the population coincide with the means of our sample, *indicating what?*
-
-=======
-## T-tests:
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 
 library(broom)
 library(purrr)
@@ -506,7 +496,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95installment = t.test(x=loans$installment) # default conf.level = 0.95
 ttest99installment = t.test(x=loans$installment, conf.level=0.99 )
 ttest50installment = t.test(x=loans$installment, conf.level=0.50 )
@@ -519,7 +509,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95annual = t.test(x=loans$log.annual.inc) # default conf.level = 0.95
 ttest99annual = t.test(x=loans$log.annual.inc, conf.level=0.99 )
 ttest50annual = t.test(x=loans$log.annual.inc, conf.level=0.50 )
@@ -532,7 +522,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95fico = t.test(x=loans$fico) # default conf.level = 0.95
 ttest99fico = t.test(x=loans$fico, conf.level=0.99 )
 ttest50fico = t.test(x=loans$fico, conf.level=0.50 )
@@ -545,7 +535,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95dti = t.test(x=loans$dti) # default conf.level = 0.95
 ttest99dti = t.test(x=loans$dti, conf.level=0.99 )
 ttest50dti = t.test(x=loans$dti, conf.level=0.50 )
@@ -558,7 +548,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95days.with.cr.line = t.test(x=loans$days.with.cr.line) # default conf.level = 0.95
 ttest99days.with.cr.line = t.test(x=loans$days.with.cr.line, conf.level=0.99 )
 ttest50days.with.cr.line = t.test(x=loans$days.with.cr.line, conf.level=0.50 )
@@ -572,7 +562,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95revol.bal = t.test(x=loans$revol.bal) # default conf.level = 0.95
 ttest99revol.bal = t.test(x=loans$revol.bal, conf.level=0.99 )
 ttest50revol.bal = t.test(x=loans$revol.bal, conf.level=0.50 )
@@ -585,7 +575,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95revol.util = t.test(x=loans$revol.util) # default conf.level = 0.95
 ttest99revol.util = t.test(x=loans$revol.util, conf.level=0.99 )
 ttest50revol.util = t.test(x=loans$revol.util, conf.level=0.50 )
@@ -598,7 +588,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95inq.last.6mths = t.test(x=loans$inq.last.6mths) # default conf.level = 0.95
 ttest99inq.last.6mths = t.test(x=loans$inq.last.6mths, conf.level=0.99 )
 ttest50inq.last.6mths = t.test(x=loans$inq.last.6mths, conf.level=0.50 )
@@ -611,7 +601,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95delinq.2yrs = t.test(x=loans$delinq.2yrs) # default conf.level = 0.95
 ttest99delinq.2yrs = t.test(x=loans$delinq.2yrs, conf.level=0.99 )
 ttest50delinq.2yrs = t.test(x=loans$delinq.2yrs, conf.level=0.50 )
@@ -624,7 +614,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-```{r results = "show"}
+```{r results = "show", echo=FALSE}
 ttest95pub.rec = t.test(x=loans$pub.rec) # default conf.level = 0.95
 ttest99pub.rec = t.test(x=loans$pub.rec, conf.level=0.99 )
 ttest50pub.rec = t.test(x=loans$pub.rec, conf.level=0.50 )
@@ -637,145 +627,7 @@ grid.arrange(p)
 dev.off()
 ```
 
-
-
-## ANOVA Tests
-The `purpose` variable in our data is a good candidate to perform ANOVA tests with. We will do an ANOVA test for each variable based on `purpose`. We will also be doing Tukey tests here. Again not all of the results may be useful, but we want to have them available for further consideration.
-
-```{r results = "show"}
-aovrate=aov(int.rate ~ purpose, data = loans)
-aovratesummary=summary(aovrate)
-aovratesummary
-aovrateturkey=TukeyHSD(aovrate)
-aovrateturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean rate of interest varies significantly.However, while conducting tukey test we see that not a significant difference in mean interest rate doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aovinstallment=aov(installment ~ purpose, data = loans)
-aovinstallmentsummary=summary(aovinstallment)
-aovinstallmentsummary
-aovinstallmentturkey=TukeyHSD(aovinstallment)
-aovinstallmentturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean installment payment varies significantly.However, while conducting tukey test we see that not a significant difference in mean installment payment income doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aovannual=aov(log.annual.inc ~ purpose, data = loans)
-aovannualsummary=summary(aovannual)
-aovannualsummary
-aovannualturkey=TukeyHSD(aovannual)
-aovannualturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean log of annual income varies significantly.However, while conducting tukey test we see that not a significant difference in mean log of annual income doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aovdti=aov(dti ~ purpose, data = loans)
-aovdtisummary=summary(aovdti)
-aovdtisummary
-aovdtiturkey=TukeyHSD(aovdti)
-aovdtiturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean debt to income ratio varies significantly.However, while conducting tukey test we see that not a significant difference in mean debt to income ratio doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aovfico=aov(fico ~ purpose, data = loans)
-aovficosummary=summary(aovfico)
-aovficosummary
-aovficoturkey=TukeyHSD(aovfico)
-aovficoturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean FICO score varies significantly.However, while conducting tukey test we see that not a significant difference in mean FICO score doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aovcrline=aov(days.with.cr.line ~ purpose, data = loans)
-aovcrlinesummary=summary(aovcrline)
-aovcrlinesummary
-aovcrlineturkey=TukeyHSD(aovcrline)
-aovcrlineturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean credit line varies significantly.However, while conducting tukey test we see that not a significant difference in mean credit line doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aovrbal=aov(revol.bal ~ purpose, data = loans)
-aovrbalsummary=summary(aovrbal)
-aovrbalsummary
-aovrbalturkey=TukeyHSD(aovrbal)
-aovrbalturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean revolving balance varies significantly.However, while conducting tukey test we see that not a significant difference in mean revolving balance doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aovrutil=aov(revol.util ~ purpose, data = loans)
-aovrutilsummary=summary(aovrutil)
-aovrutilsummary
-aovrutilturkey=TukeyHSD(aovrutil)
-aovrutilturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean ........... varies significantly.However, while conducting tukey test we see that not a significant difference in mean ............ doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aov6mts=aov(inq.last.6mths ~ purpose, data = loans)
-aov6mtssummary=summary(aov6mts)
-aov6mtssummary
-aov6mtsturkey=TukeyHSD(aov6mts)
-aov6mtsturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean ....... income varies significantly.However, while conducting tukey test we see that not a significant difference in mean ........ doesn't exist between all the categories of purpose.
-```{r results = "show"}
-aov2yrs=aov(delinq.2yrs ~ purpose, data = loans)
-aov2yrssummary=summary(aov2yrs)
-aov2yrssummary
-aov2yrsturkey=TukeyHSD(aov2yrs)
-aov2yrsturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is more than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean ....... doesnt varies significantly and while conducting tukey test we see that out previous findings are confirmed
-```{r results = "show"}
-aovpubrec=aov(pub.rec ~ purpose, data = loans)
-aovpubrecsummary=summary(aovpubrec)
-aovpubrecsummary
-aovpubrecturkey=TukeyHSD(aovpubrec)
-aovpubrecturkey
-```
-Please note that here as Pr(>F) = <2e-16 which is less than 0.05 we can say there is satisfactory evidence for each different categories of policy the mean public records varies significantly.However, while conducting tukey test we see that not a significant difference in mean public records doesn't exist between all the categories of purpose.
-
-## Chi Squared Test
-
-Chi-square tests confirm that three variables had an association between each other. The p-values between purpose and credit policy, purpose and not fully paid, and credit policy and not fully paid, are less than our chosen significance level of α = 0.05, and therefore we can confidently reject the null hypothesis *'for each'???*.
-
-*what do we mean by 'association'*
-*should we explain specify the null hypothesis somewhere?*
-*suggest hiding the below code and adding the aforementioned details*
-
-chi-square test for purpose vs credit policy
-```{r results = "show"}
-test = chisq.test(table(loans$purpose,loans$credit.policy))
-test
-test$observed
-test$expected
-test$residuals
-
-corrplot(test$residuals, is.cor = FALSE)
-```
-
-chi-square test for purpose vs not fully paid
-```{r results = "show"}
-test = chisq.test(table(loans$purpose,loans$not.fully.paid))
-test
-
-test$observed
-test$expected
-test$residuals
-
-corrplot(test$residuals, is.cor = FALSE)
-```
-
-chi-square test for credit policy vs not fully paid
-```{r results = "show"}
-test = chisq.test(table(loans$credit.policy,loans$not.fully.paid))
-test
-
-test$observed
-test$expected
-test$residuals
-
-corrplot(test$residuals, is.cor = FALSE)
-```
-
-
-## Q-Q Plots for normality test:
+## Q-Q Plots for Normality Test:
 
 We want to create a Q-Q plot for each numeric variable so we can perform a normality test for each.Please, note that the easiest way to interpret the findings is how closely the data resembles the black reference line representing the normal distribution for the variable.
 
@@ -795,6 +647,139 @@ loans %>%
 ```
 
 
+## ANOVA Tests
+ANOVA indicates that there is a significant difference in the means of all of our variables for the different categories of `purpose`, except for one.  Subsequent Tukey tests confirm these differences and validate our ANOVA tests. The ANOVA test for the one exception—delinquencies in the past two years—indicates there is no significant difference in its mean for the different categories of `purpose`. Similarly, subsequent Tukey tests confirm this lack of a difference and validates the ANOVA test.
+
+```{r results = "show"}
+aovrate=aov(int.rate ~ purpose, data = loans)
+aovratesummary=summary(aovrate)
+aovratesummary
+aovrateturkey=TukeyHSD(aovrate)
+aovrateturkey
+```
+
+```{r results = "show"}
+aovinstallment=aov(installment ~ purpose, data = loans)
+aovinstallmentsummary=summary(aovinstallment)
+aovinstallmentsummary
+aovinstallmentturkey=TukeyHSD(aovinstallment)
+aovinstallmentturkey
+```
+
+```{r results = "show"}
+aovannual=aov(log.annual.inc ~ purpose, data = loans)
+aovannualsummary=summary(aovannual)
+aovannualsummary
+aovannualturkey=TukeyHSD(aovannual)
+aovannualturkey
+```
+
+```{r results = "show"}
+aovdti=aov(dti ~ purpose, data = loans)
+aovdtisummary=summary(aovdti)
+aovdtisummary
+aovdtiturkey=TukeyHSD(aovdti)
+aovdtiturkey
+```
+
+```{r results = "show"}
+aovfico=aov(fico ~ purpose, data = loans)
+aovficosummary=summary(aovfico)
+aovficosummary
+aovficoturkey=TukeyHSD(aovfico)
+aovficoturkey
+```
+
+```{r results = "show"}
+aovcrline=aov(days.with.cr.line ~ purpose, data = loans)
+aovcrlinesummary=summary(aovcrline)
+aovcrlinesummary
+aovcrlineturkey=TukeyHSD(aovcrline)
+aovcrlineturkey
+```
+
+```{r results = "show"}
+aovrbal=aov(revol.bal ~ purpose, data = loans)
+aovrbalsummary=summary(aovrbal)
+aovrbalsummary
+aovrbalturkey=TukeyHSD(aovrbal)
+aovrbalturkey
+```
+
+```{r results = "show"}
+aovrutil=aov(revol.util ~ purpose, data = loans)
+aovrutilsummary=summary(aovrutil)
+aovrutilsummary
+aovrutilturkey=TukeyHSD(aovrutil)
+aovrutilturkey
+```
+
+```{r results = "show"}
+aov6mts=aov(inq.last.6mths ~ purpose, data = loans)
+aov6mtssummary=summary(aov6mts)
+aov6mtssummary
+aov6mtsturkey=TukeyHSD(aov6mts)
+aov6mtsturkey
+```
+
+```{r results = "show"}
+aov2yrs=aov(delinq.2yrs ~ purpose, data = loans)
+aov2yrssummary=summary(aov2yrs)
+aov2yrssummary
+aov2yrsturkey=TukeyHSD(aov2yrs)
+aov2yrsturkey
+```
+
+```{r results = "show"}
+aovpubrec=aov(pub.rec ~ purpose, data = loans)
+aovpubrecsummary=summary(aovpubrec)
+aovpubrecsummary
+aovpubrecturkey=TukeyHSD(aovpubrec)
+aovpubrecturkey
+```
+
+
+## Chi Squared Test
+Chi-square tests confirm that three variables had an association between each other. The p-values between purpose and credit policy, purpose and not fully paid, and credit policy and not fully paid, are less than our chosen significance level of α = 0.05, and therefore we can confidently reject the null hypotheses for these. This indicates there are consequential relationships between these variables.
+
+Chi-square test for purpose vs credit policy:
+```{r results = "show"}
+test = chisq.test(table(loans$purpose,loans$credit.policy))
+test
+test$observed
+test$expected
+test$residuals
+
+corrplot(test$residuals, is.cor = FALSE)
+```
+
+Chi-square test for purpose vs not fully paid:
+```{r results = "show"}
+test = chisq.test(table(loans$purpose,loans$not.fully.paid))
+test
+
+test$observed
+test$expected
+test$residuals
+
+corrplot(test$residuals, is.cor = FALSE)
+```
+
+Chi-square test for credit policy vs not fully paid:
+```{r results = "show"}
+test = chisq.test(table(loans$credit.policy,loans$not.fully.paid))
+test
+
+test$observed
+test$expected
+test$residuals
+
+corrplot(test$residuals, is.cor = FALSE)
+```
+
+
+
+
 # Conclusion and Next Steps
 *WE NEED SOME SORT OF CONCLUSION HERE, PREFERABLY REGARDING WHAT WAS FOUND DURING STATISTICAL TESTS*
 
@@ -803,7 +788,7 @@ Risks to our analysis and opportunities for future analyses:
 Private individuals historically made up the bulk of lenders in P2P markets. However, high interest rates and the prospects of risky borrowers undermined P2P lending as a legitimate financial industry. Combined with the urge for more growth by intermediaries like LendingClub, these concerns began to prompt higher lending standards and discussions about more regulation.
 By 2017, larger institutions and banks began to take over private individuals as the primary sources of lending in P2P markets. We assume this shift in P2P lenders altered the makeup of who receives what.
 
-# Follow-Up: Revolving Balance
+## Follow-Up: Revolving Balance
 While the annual income data was given to us as a log, the revolving balance was given to us unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result with a more normal distribution. However, loans with `revol.bal` value of 0 returns -Inf which we will need to revisit in the future. For now, we want to demonstrate the results of taking the log of `revol.bal`and how it increases the readability of the data and the variable resembles a normal distribution when is always a good characteristics for further modelling.
 
 ```{r}
