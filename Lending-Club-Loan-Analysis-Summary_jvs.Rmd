@@ -725,7 +725,8 @@ corrplot(test$residuals, is.cor = FALSE)
 
 # Conclusion
 
-From our analysis of the dataset we find that:  
+From our analysis of the dataset we find that:
+
 1. The credit underwriting criteria of LendingClub is proven to be effective as borrowers who do not meet the credit underwriting criteria are more than twice as likely to default in comparison to borrowers who do meet the criteria.  
 2. There are some proven relationships between `credit.policy` and other numeric variables such as `int.rate`, `fico`, and `inq.last.6mths`.  
 3. So far there are no clearly established relationships between `not.fully.paid` and other numeric variables (except for `credit.policy`).  
