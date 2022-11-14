@@ -18,27 +18,6 @@ output:
     toc_depth: '3'
 ---
 
-
-```{r include=FALSE}
-# This is what is on Blackboard for the summary paper under assignments. Let's keep this here to refer to and take it out before submitting.
-
-# Write a roughly 10-page (definitely no more than 4000 words, charts do not count) summary of the research and EDA process of your project. The summary should be prepared in R-markdown and knitted into HTML. You may some graphs and results here. This summary is to be presented to your boss, your client, or to-be submitted for publication in journals. Potential area of topics to address in this summary may include:
-# 
-#         What do we know about this dataset?
-#         What are the limitations of the dataset?
-#         How was the information gathered?
-#         What analysis has already been completed related to the content in your dataset?
-#         How did the research you gathered contribute to your question development?
-#         What additional information would be beneficial?
-#         How did your question change, if at all, after Exploratory Data Analysis?
-#         Based on EDA can you begin to sketch out an answer to your question?
-#         References (APA style preferred)
-
-# Brian: Where does the background information on p2p and LendingClub come from? Do we need to cite something?
-
-```
-
-
 ```{r setup, include=FALSE}
 # We want the results to be hidden by default, though for some chunks we will override this to show the results
 knitr::opts_chunk$set(warning = F, results = "hide", message = F)
@@ -63,18 +42,18 @@ loans <- read_csv("loan_data.csv")
 # Introduction
 Peer-to-peer (P2P) lending was a phenomenon less than ten years ago, exploding in popularity by offering a break from traditional banking. Individuals flocked to these alternative credit markets to finance their small business ventures, home purchases, and to consolidate debt. Although direct P2P lending has undergone changes over recent years, it remains a viable option for borrowers and investors.
 
-The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[“Peer to Peer (P2P) Lending Market Size, Report 2022-2030.” Peer to Peer (P2P) Lending Market Size, Report 2022-2030, www.precedenceresearch.com/peer-to-peer-lending-market. Accessed 4 Nov. 2022.] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. Analysis and statistical testing identifies credit policy and borrowers’ failure to fully pay as variables of interest that should be considered in future in-depth analyses.  
+The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[“Peer to Peer (P2P) Lending Market Size, Report 2022-2030.” Peer to Peer (P2P) Lending Market Size, Report 2022-2030, www.precedenceresearch.com/peer-to-peer-lending-market. Accessed 4 Nov. 2022.] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. Analysis and statistical testing identifies credit underwriting policy and borrowers’ failure to fully pay as variables of interest that should be considered in future in-depth analyses.  
 
 ## What is P2P Lending?
 P2P lending is the provision of financing without a traditional bank as the source of funds; it is, like it sounds, peers lending money to their peers. Instead of banks, online lending platforms provide a service that connects willing lenders, or investors, with individuals seeking to borrow funds. Historically, these investors have been predominantly private individuals seeking alternate forms of investments, wherein they receive the interest earned on the money they loan out.
 
 ![](Traditional-P2P-Lending-business-model.jpg) 
 
-Borrowers, on the other hand, are connected to feasible funding that they might not have otherwise been able to attain. Many borrowers participating in P2P lending did or would have experienced difficulties qualifying for traditional loans from banks. This perception of higher risk among the lenders can often translate into higher interest rates. P2p platforms screen borrowers and set rates and terms but it is ultimately up to the lender whether they will provide the funds. 
+Borrowers, on the other hand, are connected to feasible funding that they might not have otherwise been able to attain. Many borrowers participating in P2P lending did or would have experienced difficulties qualifying for traditional loans from banks. This perception of higher risk among the lenders can often translate into higher interest rates. P2P platforms screen borrowers and set rates and terms but it is ultimately up to the lender whether they will provide the funds. 
 
 
 ## Introducing LendingClub
-The P2P market was dominated by LendingClub during the early rise of P2P lending, and it remains a leader in the industry. It makes money by charging borrowers an origination fee, charging investors a service fee, and selling loans in secondary markets. LendingClub’s typical annual percentage rate (APR) is between 5.99% and 35.89% while the origination fee of 1% to 6% is taken off the top of loans. Borrowers on LendingClub typically have good-to-excellent credit (700 credit score) and a low debt-to-income ratio. 
+The P2P market was dominated by LendingClub during the early rise of P2P lending, and it remains a leader in the industry. It makes money by charging borrowers an origination fee, charging investors a service fee, and selling loans in secondary markets. LendingClub’s typical annual percentage rate (APR) is between 5.99% and 35.89% while the origination fee of 1% to 6% is taken off the top of loans. Borrowers on LendingClub typically have good-to-excellent credit (700 or higher credit score) and a low debt-to-income ratio. 
  
 ![](Picture 1.png) 
 
@@ -93,7 +72,7 @@ Our exploratory data analysis will closely adhere to the below 9-step checklist 
 9. Follow up
 
 ## Our Data
-Our dataset contains over 9,500 observations of loan data from LendingClub from between 2007 and 2015. We obtained the dataset from Kaggle here and can be accessed at: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
+Our dataset contains over 9,500 observations of loan data from LendingClub from between 2007 and 2015. We obtained the dataset from Kaggle here: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
 
 Our work is stored on our team GitHub here: https://github.com/jschild01/JMB_DATS_6101
 
@@ -124,7 +103,7 @@ kable(data_definitions) %>%
 
 
 ## SMART Question
-Our analysis will explore things such as income-to-debt ratios, credit score, interest rates, and delinquencies among direct P2P borrowers in an attempt to understand the risks and opportunities associated with P2P. Specifically, we intend to examine the impact that these variables have on who received loans and who defaulted on their loans between 2007 and 2015. 
+Our analysis will explore things such as income-to-debt ratios, credit score, interest rates, and delinquencies among direct P2P borrowers in an attempt to understand the risks and opportunities associated with P2P lending. Specifically, we intend to examine the impact that these variables have on who received loans and who defaulted on their loans between 2007 and 2015. 
 
 We will seek to answer few of the following questions:  
 
@@ -145,7 +124,7 @@ info(loans) %>%
   kable_styling(bootstrap_options = c("striped", "condensed"))
 ```
 
-By examining the structure of our data, we can see that there is only one character variable which might be a factor, and some of the numeric variables look like logicals.
+By examining the structure of our data, we can see that there is only one character variable which like a factor, and some of the numeric variables look like logicals.
 
 Here we can see the top and bottom rows of our dataset to get a better feel for the data. This will help us better understand the values in our dataset and how to most effectively deal with them.
 
@@ -172,8 +151,6 @@ Below are some descriptive statistics of the variables to help us better underst
 # We use the xkablesummary() function from the ezids package to see the result in a nice looking table.
 xkablesummary(loans)
 ```
-
-From this we can see that some of the variables that appeared to be logicals, like `inq.last.6mths`, `delinq.2yrs`, and `pub.rec` are actually not. However, `credit.policy` and `not.fully.paid` are.
 
 We have an idea of what to expect for a few variables, such as interest rate and credit score, so we were able to test the dataset against some of our expectations to gauge its reliability. By inspecting the summary table, we can see that interest rates for the data are between `r paste0(min(loans$int.rate)*100,"%")` and `r paste0(max(loans$int.rate)*100,"%")` and credit scores range from `r min(loans$fico)` to `r max(loans$fico)`. Although interest rates might seem to reach excessively high rates or credit scores too meager, the P2P market tended to consist of more risky loans. This aligns with our expectation and reinforces our confidence in the dataset. 
 
@@ -239,7 +216,7 @@ Setting the outlier.alpha to 0.2 to compensate for overplotting, we can now get 
 
 The `inq.last.6mths` does have some range, with most observations one of 0, 1, or 2. We can consider taking out the outliers later on, and hopefully this variable will prove useful.
 
-The `revol.bal` variable actually has a good range, but the outliers are so far out that it is difficult to see. For this variable we’ll want to consider removing outliers and possible transforming the data by taking the natural log of it, like was already done with the `annual.inc` variable.
+The `revol.bal` variable actually has a good range, but the outliers are so far out that it is difficult to see. For this variable we’ll want to consider removing outliers and possibly transforming the data by taking the natural log of it, like was already done with the `annual.inc` variable.
 
 We can take a look at the factor and logical variables with bar charts:
 ```{r fig.width=8, echo=FALSE}
@@ -257,7 +234,7 @@ loans %>%
   theme()
 ```
 
-From this we can see that the `purpose` variable would be a good candidate to perform ANOVA tests on. We can see that for each value of these variables there are at least a few hundred observations, so we should have a large enough sample size in further analysis and statistical tests. At this point we can comfortable convert `credit.policy` and `not.fully.paid` to logicals, and purpose to a factor.
+From this we can see that the `purpose` variable would be a good candidate to perform ANOVA tests on. We can see that for each value of these variables there are at least a few hundred observations, so we should have a large enough sample size in further analysis and statistical tests. At this point we can comfortable convert `credit.policy` and `not.fully.paid` to logicals, and `purpose` to a factor.
 
 ```{r include=FALSE}
 # These variables may act differently from here on out
@@ -290,7 +267,7 @@ loans %>%
   theme_minimal()
 ```
 
-Looking at this there are a few numeric variables that look fairly different depending on credit.policy: `fico`, `inq.last.6.mths`, and `int.rate`.
+Looking at this there are a few numeric variables that look fairly different depending on `credit.policy`: `fico`, `inq.last.6.mths`, and `int.rate`.
 
 ```{r fig.width=8, echo=FALSE}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
@@ -328,7 +305,7 @@ loans %>%
   theme_minimal()
 ```
 
-From this we can see some of the purpose categories stand out for certain variables. The `debt_consolidation` and `credit_card` purposes stand out for `dti` and `revol.util`. The `small_business` purpose stands out for `installment` and `int.rate`. We will perform one-way ANOVA tests later to confirm what we can see here.
+From this we can see some of the `purpose` categories stand out for certain variables. The `debt_consolidation` and `credit_card` purposes stand out for `dti` and `revol.util`, while `small_business` stands out for `installment` and `int.rate`. We will perform one-way ANOVA tests later to confirm what we can see here.
 
 ```{r echo=FALSE}
 # Covariance Matrix
@@ -345,7 +322,7 @@ dev.off()
 
 ## Correlation Plot
 
-The correlation plot below gives an overview of how each of the variables in the dataset may relate to each other. This plot includes every variable the `purpose` variable.
+The correlation plot below gives an overview of how each of the variables in the dataset may relate to each other. This plot includes every variable except the `purpose` variable.
 ```{r fig.width=7, fig.height=7, echo=FALSE}
 # For our correlation matrix we want to include everything but the purpose variable
 loans_correlation_matrix <- loans %>%
@@ -361,12 +338,12 @@ dev.off()
 corrplot.mixed(loans_correlation_matrix, tl.pos = "lt")
 ```
 
-This allows us to quantify some of the stand-outs in the additional boxplots such as `int.rate`, `fico`, and `inq.last.6mths` compared to `credit.score.` There are also four other correlations that are either greater than 0.4 or less than -0.4 that we want to explore further.
+This allows us to quantify some of the stand-outs in the additional boxplots such as `int.rate`, `fico`, and `inq.last.6mths` compared to `credit.policy`. There are also four other correlations that are either greater than 0.4 or less than -0.4 that we want to explore further.
 
 
 ## Scatter Plots
 
-Based on the four variable correlations we have not looked at yet greater than 0.4 or less than -0.4, these scatter plots allow us to get a better understanding of that correlation.
+Based on the four variable correlations we have not looked at yet that are greater than 0.4 or less than -0.4, these scatter plots allow us to get a better understanding of those correlations.
 ```{r echo=FALSE}
 loans %>%
   ggplot(aes(x = fico, y = int.rate)) +
@@ -402,7 +379,7 @@ loans %>%
   theme_minimal()
 ```
 
-As the natural log of the borrower’s annual income increases, we see that the installment of their loan does as well. This also matches our expectations, as those who make more money would likely be able to borrow larger amounts.
+As the natural log of the borrower’s annual income increases, we see that the installment of their loan does as well. This also matches our expectations, as those who make more money would likely be able to make higher payments.
 
 ```{r echo=FALSE}
 loans %>%
@@ -420,7 +397,7 @@ We see that as the borrower’s FICO score goes up, their revolving line utiliza
 
 ## Last EDA Steps
 
-Before moving into more advanced statistical tests we want to take an initial look at loans that meet the credit underwriting criteria vs the borrower fully paying. Based on the `credit.policy` and `not.fully.paid` variables, we can calculate the percentage of borrowers who did not fully pay based on if they met the credit underwriting criteria.
+Before moving into more advanced statistical tests we want to take an initial look at loans that meet the credit underwriting criteria vs the borrower not fully paying. Based on the `credit.policy` and `not.fully.paid` variables, we can calculate the percentage of borrowers who did not fully pay based on if they met the credit underwriting criteria.
 
 ```{r results = "show", echo=FALSE}
 # We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
@@ -436,7 +413,7 @@ loans %>%
   
 From this we can see that about 13.2% of borrowers who met the credit underwriting criteria did not fully pay, while for the borrowers who did not meet the credit underwriting criteria about 27.8% did not fully pay. 
 
-This indicates borrowers who did not meet the credit underwriting criteria were about twice as likely to be default on their loans than those who did meet the criteria. For comparison, default rates on loans from commercial banks for the same period as our dataset averaged 4.48%, with a maximum default rate of 7.49% default rate towards the end of 2009, according to the St. Louis Federal Reserve Bank.^[“Delinquency Rate on All Loans, All Commercial Banks.” Delinquency Rate on All Loans, All Commercial Banks (DRALACBN) | FRED | St. Louis Fed, 22 Aug. 2022, fred.stlouisfed.org/series/DRALACBN.]
+This indicates borrowers who did not meet the credit underwriting criteria were about twice as likely to default on their loans than those who did meet the criteria. For comparison, default rates on loans from commercial banks for the same period as our dataset averaged 4.48%, with a maximum default rate of 7.49% default rate towards the end of 2009, according to the St. Louis Federal Reserve Bank.^[“Delinquency Rate on All Loans, All Commercial Banks.” Delinquency Rate on All Loans, All Commercial Banks (DRALACBN) | FRED | St. Louis Fed, 22 Aug. 2022, fred.stlouisfed.org/series/DRALACBN.]
 
 We can confirm that these loans were definitely riskier, especially so if they did not meet the credit underwriting criteria. Based on this a potential lender would be wise to give serious consideration to whether or not the potential borrower meets the credit underwriting policy.
 
@@ -611,9 +588,11 @@ loans %>%
   theme_minimal()
 ```
 
+From the plots we see can see that the variables `int.rate`,`log.annual.inc`, and `fico` are the three most normalized variables.
+
 
 ## ANOVA Tests
-ANOVA indicates that there is a significant difference in the means of all of our variables for the different categories of `purpose`, except for one.  Subsequent Tukey tests confirm these differences and validate our ANOVA tests. The ANOVA test for the one exception — delinquencies in the past two years — indicates there is no significant difference in its mean for the different categories of `purpose`. Similarly, subsequent Tukey tests confirm this lack of a difference and validates the ANOVA test.
+ANOVA indicates that there is a significant difference in the means of all of our variables for the different categories of `purpose`, except for one.  Subsequent Tukey tests confirm these differences and validate our ANOVA tests. The ANOVA test for the one exception — delinquencies in the past two years — indicates there is no significant difference in its mean for the different categories of `purpose`. Similarly, subsequent Tukey tests confirm this lack of a difference and validate the ANOVA test.
 
 ```{r echo=FALSE}
 aovrate=aov(int.rate ~ purpose, data = loans)
@@ -761,7 +740,7 @@ Private individuals historically made up the bulk of lenders in P2P markets. How
 Furthermore, this dataset covers years of very different economic environments. For example, it contains data points from prior to, during, and after the 2008 financial crisis. Since we do not know the exact year of the individual loans we cannot take the time period into consideration, nor can we do time-series analysis to see how it affects the variables.
 
 # Follow-Up: Revolving Balance
-While the annual income data was given to us as a natural log, the revolving balance was given to us unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result with a more normal distribution rendering the variable more usable. However, loans with `revol.bal` value of 0 returns -Inf which we will need to revisit in the future. For now, we want to demonstrate the results of taking the log of `revol.bal`and how it increases the readability of the data.
+While the annual income data was given to us as a natural log, the revolving balance was given to us unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result with a more normal distribution rendering the variable more usable. However, some loans have a `revol.bal` value of 0  which returns -Inf when the natural log is taken. We will need to revisit this in the future. For now, we want to demonstrate the results of taking the log of `revol.bal`and how it increases the readability of the data.
 
 ```{r echo=FALSE, fig.width=4, fig.height=4}
 loans %>%
