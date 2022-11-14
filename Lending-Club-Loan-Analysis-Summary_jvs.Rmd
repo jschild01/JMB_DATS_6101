@@ -44,10 +44,26 @@ output:
 knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 ```
 
+```{r include=FALSE}
+library(ezids) # We will use functions form this package to get nicer looking results
+library(tidyverse) # We need this package for data manipulation, piping, and graphing
+library(corrplot) # We will need this package to plot the correlation matrix
+library(scales) # This package will help us when labeling the scatter plots
+library(gridExtra) # For additional table and image functionality
+library(expss)
+library(knitr)
+library(kableExtra)
+library(broom)
+library(purrr)
+# Read in the data from the working directory
+loans <- read_csv("loan_data.csv")
+#loans
+```
+
 # Introduction
 Peer-to-peer (P2P) lending was a phenomenon less than ten years ago, exploding in popularity by offering a break from traditional banking. Individuals flocked to these alternative credit markets to finance their small business ventures, home purchases, and to consolidate debt. Although direct P2P lending has undergone changes over recent years, it remains a viable option for borrowers and investors.
 
-The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[https://www.precedenceresearch.com/peer-to-peer-lending-market] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. Analysis and statistical testing identifies credit policy and borrowers’ failure to fully pay as variables of interest that should be considered in future in-depth analyses.  
+The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[“Peer to Peer (P2P) Lending Market Size, Report 2022-2030.” Peer to Peer (P2P) Lending Market Size, Report 2022-2030, www.precedenceresearch.com/peer-to-peer-lending-market. Accessed 4 Nov. 2022.] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. Analysis and statistical testing identifies credit policy and borrowers’ failure to fully pay as variables of interest that should be considered in future in-depth analyses.  
 
 ## What is P2P Lending?
 P2P lending is the provision of financing without a traditional bank as the source of funds; it is, like it sounds, peers lending money to their peers. Instead of banks, online lending platforms provide a service that connects willing lenders, or investors, with individuals seeking to borrow funds. Historically, these investors have been predominantly private individuals seeking alternate forms of investments, wherein they receive the interest earned on the money they loan out.
@@ -64,7 +80,7 @@ The P2P market was dominated by LendingClub during the early rise of P2P lending
 
 
 # Exploratory Data Analysis or EDA
-Our exploratory data analysis will closely adhere to the below 9-step checklist presented in Chapter 4 of *The Art of Data Science*.^[Peng, Roger D., and Elizabeth Matsui. “Chapter 4.” The Art of Data Science: A Guide for Anyone Who Works with Data, Skybrude Consulting LLC, Victoria, 2016, pp. 33–33.] 
+Our exploratory data analysis will closely adhere to the below 9-step checklist presented in Chapter 4 of *The Art of Data Science*.^[Peng, R. D., & Matsui, E. (2016). The Art of Data Science: A Guide for anyone who works with data. Skybrude consulting LLC.] 
 
 1. Formulate our question
 2. Read in our data
@@ -78,6 +94,8 @@ Our exploratory data analysis will closely adhere to the below 9-step checklist 
 
 ## Our Data
 Our dataset contains over 9,500 observations of loan data from LendingClub from between 2007 and 2015. We obtained the dataset from Kaggle here and can be accessed at: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
+
+Our work is stored on our team GitHub here: https://github.com/jschild01/JMB_DATS_6101
 
 Below are the variables in the dataset and their accompanying definitions as supplied by Kaggle:
 
@@ -100,7 +118,8 @@ data_definitions <- data.frame(Variable = c("credit.policy", "purpose", "int.rat
                                          "The borrower's number of derogatory public records (bankruptcy filings, tax liens, or judgments).",
                                          "Whether the borrower will be fully paid or not."))
 
-knitr::kable(data_definitions)
+kable(data_definitions) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
 ```
 
 
@@ -114,21 +133,7 @@ We will seek to answer few of the following questions:
 3.	Do borrowers who meet the credit underwriting criteria have a lower chance of not fully repaying the loan? If so, how big of a difference is it, and is it statistically significant?
 
 ## First Look
-```{r include=FALSE}
-library(ezids) # We will use functions form this package to get nicer looking results
-library(tidyverse) # We need this package for data manipulation, piping, and graphing
-library(corrplot) # We will need this package to plot the correlation matrix
-library(scales) # This package will help us when labeling the scatter plots
-library(gridExtra) # For additional table and image functionality
-library(expss)
-library(knitr)
-library(broom)
-library(purrr)
-# Read in the data from the working directory
-loans <- read_csv("loan_data.csv")
-#loans
-```
-For our analysis we will use the ezids, tidyverse, corrplot, scales, gridExtra, expss, knitr, broom, and purr libraries. Our dataset contains `r nrow(loans)` rows of data with `r ncol(loans)` columns and is structured like this:
+For our analysis we will use the ezids, tidyverse, corrplot, scales, gridExtra, expss, knitr, kableExtra, broom, and purr libraries. Our dataset contains `r nrow(loans)` rows of data with `r ncol(loans)` columns and is structured like this:
 
 ```{r results = "show", echo=FALSE, comment=""}
 # There is unfortunately no ezids function to see the result in a nice looking table, so we will use the standard function.
@@ -136,10 +141,10 @@ For our analysis we will use the ezids, tidyverse, corrplot, scales, gridExtra, 
 
 info(loans) %>%
   select(Name, Class, Length, Frequency) %>%
-  kable(align="l")
+  kable(align="l") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
 ```
-  
-  
+
 By examining the structure of our data, we can see that there is only one character variable which might be a factor, and some of the numeric variables look like logicals.
 
 Here we can see the top and bottom rows of our dataset to get a better feel for the data. This will help us better understand the values in our dataset and how to most effectively deal with them.
@@ -183,7 +188,8 @@ standard_deviations <- tibble(Variable = colnames(loans),
   filter(Variable != "purpose") %>%
   mutate(`Standard Deviation` = round(`Standard Deviation`, 2))
 
-kable(standard_deviations)
+kable(standard_deviations) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
 ```
 
 Here, we have used standard deviation as a measure of dispersion to understand the spread of each of the variables. While variables like `credit.policy` and `not.fully.paid` can only take one of 2 values, namely 0 and 1, variables like `revol.bal`,`days.with.cr.line` and `installment` have the highest standard deviations in that order.
@@ -423,13 +429,14 @@ loans %>%
   summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
   ungroup() %>%
   rename(`Meets Credit Policy` = credit.policy, `Percent Not Fully Paid` = percent_not_fully_paid) %>%
-  kable(align = "c")
+  kable(align = "c") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
 ```
   
   
 From this we can see that about 13.2% of borrowers who met the credit underwriting criteria did not fully pay, while for the borrowers who did not meet the credit underwriting criteria about 27.8% did not fully pay. 
 
-This indicates borrowers who did not meet the credit underwriting criteria were about twice as likely to be default on their loans than those who did meet the criteria. For comparison, default rates on loans from commercial banks for the same period as our dataset averaged 4.48%, with a maximum default rate of 7.49% default rate towards the end of 2009, according to the St. Louis Federal Reserve Bank.^[https://fred.stlouisfed.org/series/DRALACBN#]
+This indicates borrowers who did not meet the credit underwriting criteria were about twice as likely to be default on their loans than those who did meet the criteria. For comparison, default rates on loans from commercial banks for the same period as our dataset averaged 4.48%, with a maximum default rate of 7.49% default rate towards the end of 2009, according to the St. Louis Federal Reserve Bank.^[“Delinquency Rate on All Loans, All Commercial Banks.” Delinquency Rate on All Loans, All Commercial Banks (DRALACBN) | FRED | St. Louis Fed, 22 Aug. 2022, fred.stlouisfed.org/series/DRALACBN.]
 
 We can confirm that these loans were definitely riskier, especially so if they did not meet the credit underwriting criteria. Based on this a potential lender would be wise to give serious consideration to whether or not the potential borrower meets the credit underwriting policy.
 
@@ -438,7 +445,7 @@ We can confirm that these loans were definitely riskier, especially so if they d
 # Statistical Tests
 We conducted and performed Q-Q plots, ANOVAs, and chi-squared tests to examine the variables in our dataset and gain a better understanding of how they interact with each other. 
 
-Since our dataset is a subset of all loans facilitated by LendingClub between the years 2007 and 2015, we can treat it as a sample and conduct t-tests which confirm that the means of all the variables of the sample coincide with the means of our population. However, we cannot perform z-tests on this data because we cannot make an estimate about the standard deviation of the population (all loans facilitated by LendingClub).^[End to end case study (classification): Lending Club Data. (n.d.). Retrieved November 13, 2022, from https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[Yiu, T. (2019, June 19). Turning Lending Club’s Worst Loans into Investment Gold. Medium. https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[Lending Club Review: How it Works, Requirements and Alternatives. (n.d.). Debt.org. https://www.debt.org/credit/loans/personal/lending-club-review/] ^[Project 1: Analysis of Lending Club’s data. (n.d.). Data Science Blog. Retrieved November 13, 2022, from https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[Ph.D, M. K. (2019, April 9). LendingClub: bias in data? Machine learning and investment strategy. Retrieved November 13, 2022, from Medium website: https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
+Since our dataset is a subset of all loans facilitated by LendingClub between the years 2007 and 2015, we can treat it as a sample and conduct t-tests which confirm that the means of all the variables of the sample coincide with the means of our population. However, we cannot perform z-tests on this data because we cannot make an estimate about the standard deviation of the population (all loans facilitated by LendingClub).^[End to end case study (classification): Lending Club Data. (n.d.). Retrieved November 3, 2022, from https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[Yiu, T. (2019, June 19). Turning Lending Club’s Worst Loans into Investment Gold. Medium. https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[Lending Club Review: How it Works, Requirements and Alternatives. (n.d.). Debt.org. https://www.debt.org/credit/loans/personal/lending-club-review/] ^[Project 1: Analysis of Lending Club’s data. (n.d.). Data Science Blog. Retrieved November 3, 2022, from https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[Ph.D, M. K. (2019, April 9). LendingClub: bias in data? Machine learning and investment strategy. Retrieved November 3, 2022, from Medium website: https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
 
 
 ```{r echo=FALSE}

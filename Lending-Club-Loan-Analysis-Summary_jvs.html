@@ -11,7 +11,7 @@
 
 <meta name="author" content="Team 1: Jonathan Schild, Medhasweta Sen, Brian Gulko" />
 
-<meta name="date" content="2022-11-13" />
+<meta name="date" content="2022-11-14" />
 
 <title>LendingClub Peer-to-Peer Loan Analysis</title>
 
@@ -1825,7 +1825,7 @@ div.tocify {
 <h1 class="title toc-ignore">LendingClub Peer-to-Peer Loan Analysis</h1>
 <h4 class="author">Team 1: Jonathan Schild, Medhasweta Sen, Brian
 Gulko</h4>
-<h4 class="date">2022-11-13</h4>
+<h4 class="date">2022-11-14</h4>
 
 </div>
 
@@ -1902,89 +1902,141 @@ checklist presented in Chapter 4 of <em>The Art of Data Science</em>.<a href="#f
 <p>Our dataset contains over 9,500 observations of loan data from
 LendingClub from between 2007 and 2015. We obtained the dataset from
 Kaggle here and can be accessed at: <a href="https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis" class="uri">https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis</a></p>
+<p>Our work is stored on our team GitHub here: <a href="https://github.com/jschild01/JMB_DATS_6101" class="uri">https://github.com/jschild01/JMB_DATS_6101</a></p>
 <p>Below are the variables in the dataset and their accompanying
 definitions as supplied by Kaggle:</p>
-<table>
-<colgroup>
-<col width="9%" />
-<col width="90%" />
-</colgroup>
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
 <thead>
-<tr class="header">
-<th align="left">Variable</th>
-<th align="left">Definition</th>
+<tr>
+<th style="text-align:left;">
+Variable
+</th>
+<th style="text-align:left;">
+Definition
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td align="left">credit.policy</td>
-<td align="left">1 if the customer meets the credit underwriting
-criteria of LendingClub.com, and 0 otherwise.</td>
+<tr>
+<td style="text-align:left;">
+credit.policy
+</td>
+<td style="text-align:left;">
+1 if the customer meets the credit underwriting criteria of
+LendingClub.com, and 0 otherwise.
+</td>
 </tr>
-<tr class="even">
-<td align="left">purpose</td>
-<td align="left">The purpose of the loan (takes values creditcard,
-debtconsolidation, educational, majorpurchase, smallbusiness, and
-all_other).</td>
+<tr>
+<td style="text-align:left;">
+purpose
+</td>
+<td style="text-align:left;">
+The purpose of the loan (takes values creditcard, debtconsolidation,
+educational, majorpurchase, smallbusiness, and all_other).
+</td>
 </tr>
-<tr class="odd">
-<td align="left">int.rate</td>
-<td align="left">The interest rate of the loan, as a proportion (a rate
-of 11% would be stored as 0.11). Borrowers judged by LendingClub.com to
-be more risky are assigned higher interest rates.</td>
+<tr>
+<td style="text-align:left;">
+int.rate
+</td>
+<td style="text-align:left;">
+The interest rate of the loan, as a proportion (a rate of 11% would be
+stored as 0.11). Borrowers judged by LendingClub.com to be more risky
+are assigned higher interest rates.
+</td>
 </tr>
-<tr class="even">
-<td align="left">installment</td>
-<td align="left">The monthly installments owed by the borrower if the
-loan is funded.</td>
+<tr>
+<td style="text-align:left;">
+installment
+</td>
+<td style="text-align:left;">
+The monthly installments owed by the borrower if the loan is funded.
+</td>
 </tr>
-<tr class="odd">
-<td align="left">log.annual.inc</td>
-<td align="left">The natural log of the self-reported annual income of
-the borrower.</td>
+<tr>
+<td style="text-align:left;">
+log.annual.inc
+</td>
+<td style="text-align:left;">
+The natural log of the self-reported annual income of the borrower.
+</td>
 </tr>
-<tr class="even">
-<td align="left">dti</td>
-<td align="left">The debt-to-income ratio of the borrower (amount of
-debt divided by annual income).</td>
+<tr>
+<td style="text-align:left;">
+dti
+</td>
+<td style="text-align:left;">
+The debt-to-income ratio of the borrower (amount of debt divided by
+annual income).
+</td>
 </tr>
-<tr class="odd">
-<td align="left">fico</td>
-<td align="left">The FICO credit score of the borrower.</td>
+<tr>
+<td style="text-align:left;">
+fico
+</td>
+<td style="text-align:left;">
+The FICO credit score of the borrower.
+</td>
 </tr>
-<tr class="even">
-<td align="left">days.with.cr.line</td>
-<td align="left">The number of days the borrower has had a credit
-line.</td>
+<tr>
+<td style="text-align:left;">
+days.with.cr.line
+</td>
+<td style="text-align:left;">
+The number of days the borrower has had a credit line.
+</td>
 </tr>
-<tr class="odd">
-<td align="left">revol.bal</td>
-<td align="left">The borrower’s revolving balance (amount unpaid at the
-end of the credit card billing cycle).</td>
+<tr>
+<td style="text-align:left;">
+revol.bal
+</td>
+<td style="text-align:left;">
+The borrower’s revolving balance (amount unpaid at the end of the credit
+card billing cycle).
+</td>
 </tr>
-<tr class="even">
-<td align="left">revol.util</td>
-<td align="left">The borrower’s revolving line utilization rate (the
-amount of the credit line used relative to total credit available).</td>
+<tr>
+<td style="text-align:left;">
+revol.util
+</td>
+<td style="text-align:left;">
+The borrower’s revolving line utilization rate (the amount of the credit
+line used relative to total credit available).
+</td>
 </tr>
-<tr class="odd">
-<td align="left">inq.last.6mths</td>
-<td align="left">The borrower’s number of inquiries by creditors in the
-last 6 months.</td>
+<tr>
+<td style="text-align:left;">
+inq.last.6mths
+</td>
+<td style="text-align:left;">
+The borrower’s number of inquiries by creditors in the last 6 months.
+</td>
 </tr>
-<tr class="even">
-<td align="left">delinq.2yrs</td>
-<td align="left">The number of times the borrower had been 30+ days past
-due on a payment in the past 2 years.</td>
+<tr>
+<td style="text-align:left;">
+delinq.2yrs
+</td>
+<td style="text-align:left;">
+The number of times the borrower had been 30+ days past due on a payment
+in the past 2 years.
+</td>
 </tr>
-<tr class="odd">
-<td align="left">pub.rec</td>
-<td align="left">The borrower’s number of derogatory public records
-(bankruptcy filings, tax liens, or judgments).</td>
+<tr>
+<td style="text-align:left;">
+pub.rec
+</td>
+<td style="text-align:left;">
+The borrower’s number of derogatory public records (bankruptcy filings,
+tax liens, or judgments).
+</td>
 </tr>
-<tr class="even">
-<td align="left">not.fully.paid</td>
-<td align="left">Whether the borrower will be fully paid or not.</td>
+<tr>
+<td style="text-align:left;">
+not.fully.paid
+</td>
+<td style="text-align:left;">
+Whether the borrower will be fully paid or not.
+</td>
 </tr>
 </tbody>
 </table>
@@ -2013,9 +2065,10 @@ it, and is it statistically significant?</li>
 <div id="first-look" class="section level2" number="2.3">
 <h2><span class="header-section-number">2.3</span> First Look</h2>
 <p>For our analysis we will use the ezids, tidyverse, corrplot, scales,
-gridExtra, expss, knitr, broom, and purr libraries. Our dataset contains
-9578 rows of data with 14 columns and is structured like this:</p>
-<table>
+gridExtra, expss, knitr, kableExtra, broom, and purr libraries. Our
+dataset contains 9578 rows of data with 14 columns and is structured
+like this:</p>
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -3175,7 +3228,7 @@ effect on our analysis, thereby allowing us to continue with our
 EDA.</p>
 <p>We want to see a measure of dispersion/variation, namely standard
 deviation, for the numeric variables. The values are as follows:</p>
-<table>
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -3422,7 +3475,7 @@ borrower fully paying. Based on the <code>credit.policy</code> and
 <code>not.fully.paid</code> variables, we can calculate the percentage
 of borrowers who did not fully pay based on if they met the credit
 underwriting criteria.</p>
-<table>
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
 <th style="text-align:center;">
@@ -3578,21 +3631,26 @@ increases the readability of the data.</p>
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p><a href="https://www.precedenceresearch.com/peer-to-peer-lending-market" class="uri">https://www.precedenceresearch.com/peer-to-peer-lending-market</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>Peng, Roger D., and Elizabeth Matsui. “Chapter 4.” The
-Art of Data Science: A Guide for Anyone Who Works with Data, Skybrude
-Consulting LLC, Victoria, 2016, pp. 33–33.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p><a href="https://fred.stlouisfed.org/series/DRALACBN#" class="uri">https://fred.stlouisfed.org/series/DRALACBN#</a><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>“Peer to Peer (P2P) Lending Market Size, Report
+2022-2030.” Peer to Peer (P2P) Lending Market Size, Report 2022-2030,
+www.precedenceresearch.com/peer-to-peer-lending-market. Accessed 4
+Nov. 2022.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Peng, R. D., &amp; Matsui, E. (2016). The Art of Data
+Science: A Guide for anyone who works with data. Skybrude consulting
+LLC.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>“Delinquency Rate on All Loans, All Commercial Banks.”
+Delinquency Rate on All Loans, All Commercial Banks (DRALACBN) | FRED |
+St. Louis Fed, 22 Aug. 2022, fred.stlouisfed.org/series/DRALACBN.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 <li id="fn4"><p>End to end case study (classification): Lending Club
-Data. (n.d.). Retrieved November 13, 2022, from <a href="https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a" class="uri">https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a</a><a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+Data. (n.d.). Retrieved November 3, 2022, from <a href="https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a" class="uri">https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a</a><a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 <li id="fn5"><p>Yiu, T. (2019, June 19). Turning Lending Club’s Worst
 Loans into Investment Gold. Medium. <a href="https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee" class="uri">https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee</a><a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 <li id="fn6"><p>Lending Club Review: How it Works, Requirements and
 Alternatives. (n.d.). Debt.org. <a href="https://www.debt.org/credit/loans/personal/lending-club-review/" class="uri">https://www.debt.org/credit/loans/personal/lending-club-review/</a><a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 <li id="fn7"><p>Project 1: Analysis of Lending Club’s data. (n.d.). Data
-Science Blog. Retrieved November 13, 2022, from <a href="https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/" class="uri">https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/</a><a href="#fnref7" class="footnote-back">↩︎</a></p></li>
+Science Blog. Retrieved November 3, 2022, from <a href="https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/" class="uri">https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/</a><a href="#fnref7" class="footnote-back">↩︎</a></p></li>
 <li id="fn8"><p>Ph.D, M. K. (2019, April 9). LendingClub: bias in data?
-Machine learning and investment strategy. Retrieved November 13, 2022,
+Machine learning and investment strategy. Retrieved November 3, 2022,
 from Medium website: <a href="https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0" class="uri">https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0</a><a href="#fnref8" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
