@@ -1,6 +1,6 @@
 ---
 title: "LendingClub Peer-to-Peer Loan Analysis"
-author: "Jonathan Schild, Medhasweta Sen, Brian Gulko"
+author: "Team 1: Jonathan Schild, Medhasweta Sen, Brian Gulko"
 date: "`r Sys.Date()`"
 always_allow_html: true
 output:
@@ -45,12 +45,14 @@ knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 ```
 
 # Introduction
-Peer-to-peer (P2P) lending was a phenomenon less than ten years ago, exploding in popularity by offering a break from traditional banking. Individuals flocked to these alternative credit markets to finance their small business ventures, home purchases, and to consolidate debt. Although direct P2P lending has undergone changes over recent years, it remains a viable option for borrowers and investors. The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[https://www.precedenceresearch.com/peer-to-peer-lending-market] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. Analysis and statistical testing identifies credit policy and borrowers’ failure to fully pay as variables of interest that should be considered in future in-depth analyses.  
+Peer-to-peer (P2P) lending was a phenomenon less than ten years ago, exploding in popularity by offering a break from traditional banking. Individuals flocked to these alternative credit markets to finance their small business ventures, home purchases, and to consolidate debt. Although direct P2P lending has undergone changes over recent years, it remains a viable option for borrowers and investors.
+
+The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[https://www.precedenceresearch.com/peer-to-peer-lending-market] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. Analysis and statistical testing identifies credit policy and borrowers’ failure to fully pay as variables of interest that should be considered in future in-depth analyses.  
 
 ## What is P2P Lending?
 P2P lending is the provision of financing without a traditional bank as the source of funds; it is, like it sounds, peers lending money to their peers. Instead of banks, online lending platforms provide a service that connects willing lenders, or investors, with individuals seeking to borrow funds. Historically, these investors have been predominantly private individuals seeking alternate forms of investments, wherein they receive the interest earned on the money they loan out.
 
-![image](Traditional-P2P-Lending-business-model.jpg) 
+![](Traditional-P2P-Lending-business-model.jpg) 
 
 Borrowers, on the other hand, are connected to feasible funding that they might not have otherwise been able to attain. Many borrowers participating in P2P lending did or would have experienced difficulties qualifying for traditional loans from banks. This perception of higher risk among the lenders can often translate into higher interest rates. P2p platforms screen borrowers and set rates and terms but it is ultimately up to the lender whether they will provide the funds. 
 
@@ -58,7 +60,7 @@ Borrowers, on the other hand, are connected to feasible funding that they might 
 ## Introducing LendingClub
 The P2P market was dominated by LendingClub during the early rise of P2P lending, and it remains a leader in the industry. It makes money by charging borrowers an origination fee, charging investors a service fee, and selling loans in secondary markets. LendingClub’s typical annual percentage rate (APR) is between 5.99% and 35.89% while the origination fee of 1% to 6% is taken off the top of loans. Borrowers on LendingClub typically have good-to-excellent credit (700 credit score) and a low debt-to-income ratio. 
  
-![image](Picture 1.png) 
+![](Picture 1.png) 
 
 
 # Exploratory Data Analysis or EDA
@@ -77,7 +79,7 @@ Our exploratory data analysis will closely adhere to the below 9-step checklist 
 ## Our Data
 Our dataset contains over 9,500 observations of loan data from LendingClub from between 2007 and 2015. We obtained the dataset from Kaggle here and can be accessed at: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
 
-Below are the variables in the dataset and their accompanying definitions as supplied by Kaggle?:
+Below are the variables in the dataset and their accompanying definitions as supplied by Kaggle:
 
 ```{r results = "show", echo=FALSE}
 # This is copied form the Kaggle site
@@ -112,12 +114,6 @@ We will seek to answer few of the following questions:
 3.	Do borrowers who meet the credit underwriting criteria have a lower chance of not fully repaying the loan? If so, how big of a difference is it, and is it statistically significant?
 
 ## First Look
-
---We start by loading the tidyverse and ezids libraries^[Our code requires the tidyverse and ezids libraries.] and reading on our dataset.
-Please note we also require packages corrplot and scale to efficiently conduct our EDA.If we require any other packages we will import them along the way.--
-
-For our analysis we will use the ezids, tidyverse, corrplot, scales, gridExtra, expss, and knitr libraries. *Additional libraries??*
-
 ```{r include=FALSE}
 library(ezids) # We will use functions form this package to get nicer looking results
 library(tidyverse) # We need this package for data manipulation, piping, and graphing
@@ -126,18 +122,24 @@ library(scales) # This package will help us when labeling the scatter plots
 library(gridExtra) # For additional table and image functionality
 library(expss)
 library(knitr)
+library(broom)
+library(purrr)
 # Read in the data from the working directory
 loans <- read_csv("loan_data.csv")
 #loans
 ```
-
-Our dataset contains `r nrow(loans)` rows of data with `r ncol(loans)` columns and is structured like this:
+For our analysis we will use the ezids, tidyverse, corrplot, scales, gridExtra, expss, knitr, broom, and purr libraries. Our dataset contains `r nrow(loans)` rows of data with `r ncol(loans)` columns and is structured like this:
 
 ```{r results = "show", echo=FALSE, comment=""}
 # There is unfortunately no ezids function to see the result in a nice looking table, so we will use the standard function.
-str(loans)
-```
+# str(loans)
 
+info(loans) %>%
+  select(Name, Class, Length, Frequency) %>%
+  kable(align="l")
+```
+  
+  
 By examining the structure of our data, we can see that there is only one character variable which might be a factor, and some of the numeric variables look like logicals.
 
 Here we can see the top and bottom rows of our dataset to get a better feel for the data. This will help us better understand the values in our dataset and how to most effectively deal with them.
@@ -174,23 +176,6 @@ The range of the utilization, or the percent of credit being used, is between `r
 
 We want to see a measure of dispersion/variation, namely standard deviation, for the numeric variables. The values are as follows:
 
-```{r results = "show", echo=FALSE}
-# Added library to earlier chunk
-# library(expss)
-
-tab <- loans %>%
-   tab_cells(credit.policy,int.rate, installment, log.annual.inc, dti, fico ,days.with.cr.line,revol.bal,revol.util,inq.last.6mths,delinq.2yrs,pub.rec,not.fully.paid) %>%
-  tab_cols() %>% 
-    tab_stat_sd(label = "Std. dev.") %>%
-    tab_pivot() %>% 
-    set_caption("Table with Standard Deviation of all numeric variables.")
-tab
-png("sd.png", height=700, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
 ```{r, results = "show", echo=FALSE}
 # Alternate table for standard deviations
 standard_deviations <- tibble(Variable = colnames(loans),
@@ -201,7 +186,7 @@ standard_deviations <- tibble(Variable = colnames(loans),
 kable(standard_deviations)
 ```
 
-*Brian: What do these standard deviations tell us about the data?*
+Here, we have used standard deviation as a measure of dispersion to understand the spread of each of the variables. While variables like `credit.policy` and `not.fully.paid` can only take one of 2 values, namely 0 and 1, variables like `revol.bal`,`days.with.cr.line` and `installment` have the highest standard deviations in that order.
 
 We are satisfied with the data so far, so the next step is to begin visualizing it.
 
@@ -223,9 +208,9 @@ loans %>%
   theme_minimal()
 ```
 
-One of the primary things we are looking for, normality, we can see with the `log.annual.inc` variable. Some other variables look at least somewhat normal, such as `days.with.cr.line`, `fico`, `installment`, and `int.rate`. We will make QQ-plots later to get a better sense of the normality of these variables.
+One of the primary things we are looking for, normality, we can see with the `log.annual.inc` variable. Some other variables look at least somewhat normal, such as `days.with.cr.line`, `fico`, `installment`, and `int.rate`. We will make Q-Q plots later to get a better sense of the normality of these variables.
 
-The `revol.util` variable is fairly flat, and the `dti` a little more rounded, but not normal looking. There are 4 variables where we clearly have outlier issues: `delinq.2yrs`, `inq.last.6.mths`, `pub.rec`, and `revol.bal`. For those we can see one or a small number of large bars on the left, and then a fairly flat graph around zero after that.
+The `revol.util` variable is fairly flat, and the `dti` a little more rounded, but not normal looking. There are four variables where we clearly have outlier issues: `delinq.2yrs`, `inq.last.6.mths`, `pub.rec`, and `revol.bal`. For those we can see one or a small number of large bars on the left, and then a fairly flat graph around zero after that.
 
 To help get a better look at the outliers, below are boxplots for the same variables:
 ```{r fig.width=8, echo=FALSE}
@@ -244,7 +229,7 @@ loans %>%
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 ```
 
-Setting the outlier alpha to 0.2 to compensate for overplotting, we can now get a better understanding of the four variables with outlier issues. For `delinq.2yrs` and `public.rec`, nearly all of the observations are 0, with a small number of outliers at integer values above zero. It looks like these two variables will not be very useful to us.
+Setting the outlier.alpha to 0.2 to compensate for overplotting, we can now get a better understanding of the four variables with outlier issues. For `delinq.2yrs` and `public.rec`, nearly all of the observations are 0, with a small number of outliers at integer values above zero. It looks like these two variables will not be very useful to us.
 
 The `inq.last.6mths` does have some range, with most observations one of 0, 1, or 2. We can consider taking out the outliers later on, and hopefully this variable will prove useful.
 
@@ -281,8 +266,8 @@ Now we can further explore the data to see how the numeric variables differ base
 
 ## Additional Boxplots
 
-Here, we look at the numeric variables for individual sub-categories of the logical and categorical variables. This helps us comprehensively understand how the numerical variables are distributed with respect to each of the logical and categorical values.
-```{r echo=FALSE}
+Here we look at the numeric variables for individual sub-categories of the logical and categorical variables. This helps us comprehensively understand how the numerical variables are distributed with respect to each of the logical and categorical values.
+```{r fig.width=8, echo=FALSE}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
 # for each variable using the facet_wrap() function in ggplot2. We can see this for each credit policy value by excluding
 # it in the gather() function.
@@ -299,9 +284,9 @@ loans %>%
   theme_minimal()
 ```
 
-Looking at this there are a few numeric variables that look fairly different depending on credit.policy: fico, inq.last.6.mths, and int.rate.
+Looking at this there are a few numeric variables that look fairly different depending on credit.policy: `fico`, `inq.last.6.mths`, and `int.rate`.
 
-```{r echo=FALSE}
+```{r fig.width=8, echo=FALSE}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
 # for each variable using the facet_wrap() function in ggplot2. We can see this for each not fully paid value by excluding
 # it in the gather() function.
@@ -320,7 +305,7 @@ loans %>%
 
 Looking at this there aren’t any variables that visually stand out to a significant degree.
 
-```{r echo=FALSE}
+```{r fig.width=8, echo=FALSE}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
 # for each variable using the facet_wrap() function in ggplot2. We can see this for each purpose value by excluding
 # it in the gather() function.
@@ -337,16 +322,10 @@ loans %>%
   theme_minimal()
 ```
 
-From this we can see some of the purpose categories stand out for certain variables. Debt_consolidation and credit_card stand out for dti and revol.util. small_business stands out for installment and int.rate. We will perform ANOVA tests later to confirm what we can see here.
+From this we can see some of the purpose categories stand out for certain variables. The `debt_consolidation` and `credit_card` purposes stand out for `dti` and `revol.util`. The `small_business` purpose stands out for `installment` and `int.rate`. We will perform one-way ANOVA tests later to confirm what we can see here.
 
-
-## Covariance Matrix
-*Brian: Remove this section??*
-
-This is the first and primary statistical measure to understand the relationship between the variables and how changes in one might affect the other.
-```{r results = "show", echo=FALSE}
-# Brian: should we include this?
-
+```{r echo=FALSE}
+# Covariance Matrix
 loans_covarience_matrix <- loans %>%
   select(-purpose) %>%
   cov()
@@ -358,10 +337,7 @@ dev.off()
 ```
 
 
-## Correlation Matrix
-
---A correlation matrix is a table showing correlation coefficients between variables. Each cell in the table shows the correlation between two variables. A correlation matrix is used to summarize data, as an input into a more advanced analysis, and as a diagnostic for advanced analyses. A heat map is a data visualization technique that shows magnitude of a phenomenon as color in two dimensions. The variation in color may be by hue or intensity, giving obvious visual cues to the reader about how the phenomenon is clustered or varies over space.--
-
+## Correlation Plot
 
 The correlation plot below gives an overview of how each of the variables in the dataset may relate to each other. This plot includes every variable the `purpose` variable.
 ```{r fig.width=7, fig.height=7, echo=FALSE}
@@ -384,7 +360,7 @@ This allows us to quantify some of the stand-outs in the additional boxplots suc
 
 ## Scatter Plots
 
-Based on the 4 variable correlations we have not looked at yet greater than 0.4 or less than -0.4, these scatter plots allow us to get a better understanding of that correlation.
+Based on the four variable correlations we have not looked at yet greater than 0.4 or less than -0.4, these scatter plots allow us to get a better understanding of that correlation.
 ```{r echo=FALSE}
 loans %>%
   ggplot(aes(x = fico, y = int.rate)) +
@@ -396,7 +372,7 @@ loans %>%
   theme_minimal()
 ```
 
-Using an alpha to 0.2 to compensate for overplotting we can see a clear trend of interest rates falling as the borrower’s FICO score goes up, which matches our expectations. All of the FICO scores end in 2 or 7, which is why the results fall into vertical lines.
+Using a point alpha to 0.2 to compensate for overplotting we can see a clear trend of interest rates falling as the borrower’s FICO score goes up, which matches our expectations. All of the FICO scores end in 2 or 7, which is why the results fall into vertical lines.
 
 ```{r echo=FALSE}
 loans %>%
@@ -458,97 +434,79 @@ This indicates borrowers who did not meet the credit underwriting criteria were 
 We can confirm that these loans were definitely riskier, especially so if they did not meet the credit underwriting criteria. Based on this a potential lender would be wise to give serious consideration to whether or not the potential borrower meets the credit underwriting policy.
 
 
-## Final Data Definitions and Types
-Now that we have done a thorough EDA, below is a modified table of the variables and definitions with the variable type added as a helpful reference tool.
-
-```{r results = "show", echo=FALSE}
-# Brian: I'm not sure if we should include this or where
-
-# Add a type column and reorder it so that definition is last
-data_definitions_augmented <- data_definitions %>%
-  mutate(Type = c("Logical", "Factor", "Numeric", "Numeric", "Numeric", "Numeric", "Integer", "Numeric", "Integer", "Numeric", "Integer", "Integer", "Integer", "Logical")) %>%
-  select(Variable, Type, Definition)
-
-# We will use a kable table for simplicity
-kable(data_definitions_augmented)
-```
-
-
 
 # Statistical Tests
-We conducted and performed Q-Q plots, ANOVAs, and chi-squared tests to examine the variables in our dataset and gain a better understanding of how they interact with each other. Additionally, t-tests confirm that the means of all the variables of the sample coincide with the means of our population.^[End to end case study (classification): Lending Club Data. (n.d.). Retrieved November 13, 2022, from https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[Yiu, T. (2019, June 19). Turning Lending Club’s Worst Loans into Investment Gold. Medium. https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[Lending Club Review: How it Works, Requirements and Alternatives. (n.d.). Debt.org. https://www.debt.org/credit/loans/personal/lending-club-review/] ^[Project 1: Analysis of Lending Club’s data. (n.d.). Data Science Blog. Retrieved November 13, 2022, from https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[Ph.D, M. K. (2019, April 9). LendingClub: bias in data? Machine learning and investment strategy. Retrieved November 13, 2022, from Medium website: https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
+We conducted and performed Q-Q plots, ANOVAs, and chi-squared tests to examine the variables in our dataset and gain a better understanding of how they interact with each other. 
+
+Since our dataset is a subset of all loans facilitated by LendingClub between the years 2007 and 2015, we can treat it as a sample and conduct t-tests which confirm that the means of all the variables of the sample coincide with the means of our population. However, we cannot perform z-tests on this data because we cannot make an estimate about the standard deviation of the population (all loans facilitated by LendingClub).^[End to end case study (classification): Lending Club Data. (n.d.). Retrieved November 13, 2022, from https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[Yiu, T. (2019, June 19). Turning Lending Club’s Worst Loans into Investment Gold. Medium. https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[Lending Club Review: How it Works, Requirements and Alternatives. (n.d.). Debt.org. https://www.debt.org/credit/loans/personal/lending-club-review/] ^[Project 1: Analysis of Lending Club’s data. (n.d.). Data Science Blog. Retrieved November 13, 2022, from https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[Ph.D, M. K. (2019, April 9). LendingClub: bias in data? Machine learning and investment strategy. Retrieved November 13, 2022, from Medium website: https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
 
 
-```{r results = "show", echo=FALSE}
-
-library(broom)
-library(purrr)
-
+```{r echo=FALSE}
 ttest95rate = t.test(x=loans$int.rate) # default conf.level = 0.95
 ttest99rate = t.test(x=loans$int.rate, conf.level=0.99 )
 ttest50rate = t.test(x=loans$int.rate, conf.level=0.50 )
 
 tab <- map_df(list(ttest95rate, ttest99rate, ttest50rate),tidy)
 tab
-png("t1.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t1.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95installment = t.test(x=loans$installment) # default conf.level = 0.95
 ttest99installment = t.test(x=loans$installment, conf.level=0.99 )
 ttest50installment = t.test(x=loans$installment, conf.level=0.50 )
 
 tab <- map_df(list(ttest95installment,ttest99installment,ttest50installment), tidy)
 tab
-png("t2.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t2.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95annual = t.test(x=loans$log.annual.inc) # default conf.level = 0.95
 ttest99annual = t.test(x=loans$log.annual.inc, conf.level=0.99 )
 ttest50annual = t.test(x=loans$log.annual.inc, conf.level=0.50 )
 
 tab <- map_df(list(ttest95annual,ttest99annual,ttest50annual), tidy)
 tab
-png("t3.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t3.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95fico = t.test(x=loans$fico) # default conf.level = 0.95
 ttest99fico = t.test(x=loans$fico, conf.level=0.99 )
 ttest50fico = t.test(x=loans$fico, conf.level=0.50 )
 
 tab <- map_df(list(ttest95fico,ttest99fico,ttest50fico), tidy)
 tab
-png("t4.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t4.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95dti = t.test(x=loans$dti) # default conf.level = 0.95
 ttest99dti = t.test(x=loans$dti, conf.level=0.99 )
 ttest50dti = t.test(x=loans$dti, conf.level=0.50 )
 
 tab <- map_df(list(ttest95dti,ttest99dti,ttest50dti), tidy)
 tab
-png("t5.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t5.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95days.with.cr.line = t.test(x=loans$days.with.cr.line) # default conf.level = 0.95
 ttest99days.with.cr.line = t.test(x=loans$days.with.cr.line, conf.level=0.99 )
 ttest50days.with.cr.line = t.test(x=loans$days.with.cr.line, conf.level=0.50 )
@@ -556,82 +514,82 @@ ttest50days.with.cr.line = t.test(x=loans$days.with.cr.line, conf.level=0.50 )
 
 tab <- map_df(list(ttest95days.with.cr.line,ttest99days.with.cr.line,ttest50days.with.cr.line), tidy)
 tab
-png("t6.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t6.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95revol.bal = t.test(x=loans$revol.bal) # default conf.level = 0.95
 ttest99revol.bal = t.test(x=loans$revol.bal, conf.level=0.99 )
 ttest50revol.bal = t.test(x=loans$revol.bal, conf.level=0.50 )
 
 tab <- map_df(list(ttest95revol.bal,ttest99revol.bal,ttest50revol.bal), tidy)
 tab
-png("t7.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t7.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95revol.util = t.test(x=loans$revol.util) # default conf.level = 0.95
 ttest99revol.util = t.test(x=loans$revol.util, conf.level=0.99 )
 ttest50revol.util = t.test(x=loans$revol.util, conf.level=0.50 )
 
 tab <- map_df(list(ttest95revol.util,ttest99revol.util,ttest50revol.util), tidy)
 tab
-png("t8.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t8.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95inq.last.6mths = t.test(x=loans$inq.last.6mths) # default conf.level = 0.95
 ttest99inq.last.6mths = t.test(x=loans$inq.last.6mths, conf.level=0.99 )
 ttest50inq.last.6mths = t.test(x=loans$inq.last.6mths, conf.level=0.50 )
 
 tab <- map_df(list(ttest95inq.last.6mths,ttest99inq.last.6mths,ttest50inq.last.6mths), tidy)
 tab
-png("t9.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t9.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95delinq.2yrs = t.test(x=loans$delinq.2yrs) # default conf.level = 0.95
 ttest99delinq.2yrs = t.test(x=loans$delinq.2yrs, conf.level=0.99 )
 ttest50delinq.2yrs = t.test(x=loans$delinq.2yrs, conf.level=0.50 )
 
 tab <- map_df(list(ttest95delinq.2yrs,ttest99delinq.2yrs,ttest50delinq.2yrs), tidy)
 tab
-png("t10.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t10.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
-```{r results = "show", echo=FALSE}
+```{r echo=FALSE}
 ttest95pub.rec = t.test(x=loans$pub.rec) # default conf.level = 0.95
 ttest99pub.rec = t.test(x=loans$pub.rec, conf.level=0.99 )
 ttest50pub.rec = t.test(x=loans$pub.rec, conf.level=0.50 )
 
 tab <- map_df(list(ttest95pub.rec,ttest99pub.rec,ttest50pub.rec), tidy)
 tab
-png("t11.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+# png("t11.png", height=100, width=700)
+# p<-tableGrob(tab)
+# grid.arrange(p)
+# dev.off()
 ```
 
 ## Q-Q Plots for Normality Test:
 
-We want to create a Q-Q plot for each numeric variable so we can perform a normality test for each.Please, note that the easiest way to interpret the findings is how closely the data resembles the black reference line representing the normal distribution for the variable.
+We want to create a Q-Q plot for each numeric variable so we can perform a normality test for each. This reinforces what we was in the histograms during our EDA.
 
-```{r}
+```{r echo=FALSE}
 # By gathering the variables we want to see into a long format with the gather() function, we can then create a Q-Q plot
 # for each variable using the facet_wrap() function in ggplot2.
 loans %>%
@@ -648,9 +606,9 @@ loans %>%
 
 
 ## ANOVA Tests
-ANOVA indicates that there is a significant difference in the means of all of our variables for the different categories of `purpose`, except for one.  Subsequent Tukey tests confirm these differences and validate our ANOVA tests. The ANOVA test for the one exception—delinquencies in the past two years—indicates there is no significant difference in its mean for the different categories of `purpose`. Similarly, subsequent Tukey tests confirm this lack of a difference and validates the ANOVA test.
+ANOVA indicates that there is a significant difference in the means of all of our variables for the different categories of `purpose`, except for one.  Subsequent Tukey tests confirm these differences and validate our ANOVA tests. The ANOVA test for the one exception — delinquencies in the past two years — indicates there is no significant difference in its mean for the different categories of `purpose`. Similarly, subsequent Tukey tests confirm this lack of a difference and validates the ANOVA test.
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovrate=aov(int.rate ~ purpose, data = loans)
 aovratesummary=summary(aovrate)
 aovratesummary
@@ -658,7 +616,7 @@ aovrateturkey=TukeyHSD(aovrate)
 aovrateturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovinstallment=aov(installment ~ purpose, data = loans)
 aovinstallmentsummary=summary(aovinstallment)
 aovinstallmentsummary
@@ -666,7 +624,7 @@ aovinstallmentturkey=TukeyHSD(aovinstallment)
 aovinstallmentturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovannual=aov(log.annual.inc ~ purpose, data = loans)
 aovannualsummary=summary(aovannual)
 aovannualsummary
@@ -674,7 +632,7 @@ aovannualturkey=TukeyHSD(aovannual)
 aovannualturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovdti=aov(dti ~ purpose, data = loans)
 aovdtisummary=summary(aovdti)
 aovdtisummary
@@ -682,7 +640,7 @@ aovdtiturkey=TukeyHSD(aovdti)
 aovdtiturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovfico=aov(fico ~ purpose, data = loans)
 aovficosummary=summary(aovfico)
 aovficosummary
@@ -690,7 +648,7 @@ aovficoturkey=TukeyHSD(aovfico)
 aovficoturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovcrline=aov(days.with.cr.line ~ purpose, data = loans)
 aovcrlinesummary=summary(aovcrline)
 aovcrlinesummary
@@ -698,7 +656,7 @@ aovcrlineturkey=TukeyHSD(aovcrline)
 aovcrlineturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovrbal=aov(revol.bal ~ purpose, data = loans)
 aovrbalsummary=summary(aovrbal)
 aovrbalsummary
@@ -706,7 +664,7 @@ aovrbalturkey=TukeyHSD(aovrbal)
 aovrbalturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovrutil=aov(revol.util ~ purpose, data = loans)
 aovrutilsummary=summary(aovrutil)
 aovrutilsummary
@@ -714,7 +672,7 @@ aovrutilturkey=TukeyHSD(aovrutil)
 aovrutilturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aov6mts=aov(inq.last.6mths ~ purpose, data = loans)
 aov6mtssummary=summary(aov6mts)
 aov6mtssummary
@@ -722,7 +680,7 @@ aov6mtsturkey=TukeyHSD(aov6mts)
 aov6mtsturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aov2yrs=aov(delinq.2yrs ~ purpose, data = loans)
 aov2yrssummary=summary(aov2yrs)
 aov2yrssummary
@@ -730,7 +688,7 @@ aov2yrsturkey=TukeyHSD(aov2yrs)
 aov2yrsturkey
 ```
 
-```{r results = "show"}
+```{r echo=FALSE}
 aovpubrec=aov(pub.rec ~ purpose, data = loans)
 aovpubrecsummary=summary(aovpubrec)
 aovpubrecsummary
@@ -739,11 +697,11 @@ aovpubrecturkey
 ```
 
 
-## Chi Squared Test
-Chi-square tests confirm that three variables had an association between each other. The p-values between purpose and credit policy, purpose and not fully paid, and credit policy and not fully paid, are less than our chosen significance level of α = 0.05, and therefore we can confidently reject the null hypotheses for these. This indicates there are consequential relationships between these variables.
+## Chi-Squared Tests
+Chi-square tests confirm that three variables had an association between each other. The p-values between `purpose` and `credit.policy`, `purpose` and `not.fully.paid`, and `credit.policy` and `not.fully.paid`, are less than our chosen significance level of α = 0.05, and therefore we can confidently reject the null hypotheses for these. This indicates there are consequential relationships between these variables.
 
-Chi-square test for purpose vs credit policy:
-```{r results = "show"}
+Chi-square test for `purpose` vs `credit.policy`:
+```{r echo=FALSE}
 test = chisq.test(table(loans$purpose,loans$credit.policy))
 test
 test$observed
@@ -753,8 +711,8 @@ test$residuals
 corrplot(test$residuals, is.cor = FALSE)
 ```
 
-Chi-square test for purpose vs not fully paid:
-```{r results = "show"}
+Chi-square test for `purpose` vs `not.fully.paid`:
+```{r echo=FALSE}
 test = chisq.test(table(loans$purpose,loans$not.fully.paid))
 test
 
@@ -765,8 +723,8 @@ test$residuals
 corrplot(test$residuals, is.cor = FALSE)
 ```
 
-Chi-square test for credit policy vs not fully paid:
-```{r results = "show"}
+Chi-square test for `credit.policy` vs `not.fully.paid`:
+```{r echo=FALSE}
 test = chisq.test(table(loans$credit.policy,loans$not.fully.paid))
 test
 
@@ -779,250 +737,51 @@ corrplot(test$residuals, is.cor = FALSE)
 
 
 
+# Conclusion
 
-# Conclusion and Next Steps
-*WE NEED SOME SORT OF CONCLUSION HERE, PREFERABLY REGARDING WHAT WAS FOUND DURING STATISTICAL TESTS*
+From our analysis of the dataset we find that:  
+1. The credit underwriting criteria of LendingClub is proven to be effective as borrowers who do not meet the credit underwriting criteria are more than twice as likely to default in comparison to borrowers who do meet the criteria.  
+2. There are some proven relationships between `credit.policy` and other numeric variables such as `int.rate`, `fico`, and `inq.last.6mths`.  
+3. So far there are no clearly established relationships between `not.fully.paid` and other numeric variables (except for `credit.policy`).  
+4. There are statistically significant relationships between the categorical and logical variables `purpose`, `credit.policy`, and `not.fully.paid`.  
+5. For all numeric variables except for `delinq.2yrs`, their mean significantly varies for different categories of`purpose`.
 
-Risks to our analysis and opportunities for future analyses:
 
-Private individuals historically made up the bulk of lenders in P2P markets. However, high interest rates and the prospects of risky borrowers undermined P2P lending as a legitimate financial industry. Combined with the urge for more growth by intermediaries like LendingClub, these concerns began to prompt higher lending standards and discussions about more regulation.
-By 2017, larger institutions and banks began to take over private individuals as the primary sources of lending in P2P markets. We assume this shift in P2P lenders altered the makeup of who receives what.
+## Vulnerabilities to Our Analysis
 
-## Follow-Up: Revolving Balance
-While the annual income data was given to us as a log, the revolving balance was given to us unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result with a more normal distribution. However, loans with `revol.bal` value of 0 returns -Inf which we will need to revisit in the future. For now, we want to demonstrate the results of taking the log of `revol.bal`and how it increases the readability of the data and the variable resembles a normal distribution when is always a good characteristics for further modelling.
+Private individuals historically made up the bulk of lenders in P2P markets. However, high interest rates and the prospects of risky borrowers undermined P2P lending as a legitimate financial industry. Combined with the urge for more growth by intermediaries like LendingClub, these concerns began to prompt higher lending standards and discussions about more regulation. By 2017, larger institutions and banks began to take over private individuals as the primary sources of lending in P2P markets. We assume this shift in P2P lenders altered the makeup of who receives what.
 
-```{r}
-loans$revol.bal=log(loans$revol.bal)
+Furthermore, this dataset covers years of very different economic environments. For example, it contains data points from prior to, during, and after the 2008 financial crisis. Since we do not know the exact year of the individual loans we cannot take the time period into consideration, nor can we do time-series analysis to see how it affects the variables.
+
+# Follow-Up: Revolving Balance
+While the annual income data was given to us as a natural log, the revolving balance was given to us unmodified. We discovered that taking the log of of the `revol.bal` variable gives a better result with a more normal distribution rendering the variable more usable. However, loans with `revol.bal` value of 0 returns -Inf which we will need to revisit in the future. For now, we want to demonstrate the results of taking the log of `revol.bal`and how it increases the readability of the data.
+
+```{r echo=FALSE, fig.width=4, fig.height=4}
 loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
+  ggplot(aes(x = revol.bal)) +
   geom_histogram(fill = "steelblue", color = "black") +
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
+  labs(title = "Histogram of Revolving Balance", x = "Revolving Balance", y = "Count") +
   theme_minimal()
 
 loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
-  geom_boxplot(fill = "steelblue", color = "black",
-               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Boxplots of Numeric Variables", x = "Value") +
-  theme_minimal() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
-
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
-# for each variable using the facet_wrap() function in ggplot2. We can see this for each credit policy value by excluding
-# it in the gather() function.
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, credit.policy) %>%
-  gather(variable, value, -credit.policy) %>%
-  ggplot(aes(x = value, y = as.logical(credit.policy), fill = as.logical(credit.policy))) +
-  geom_boxplot(outlier.size = 2, outlier.alpha = 0.2) +  # Translucent and larger outliers to help with overplotting
-  guides(fill = guide_legend(reverse = TRUE)) + # So the legend order matches the order in the graphs
-  facet_wrap(~ variable, scales = "free_x") + # Free x scale so the graphs are readable
-  labs(title = "Boxplots of Numeric Variables", subtitle = "Comparing `credit.policy` Values",
-       x = "Value", y = "Count", fill = "Credit Policy") +
-  theme_minimal()
-
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
-# for each variable using the facet_wrap() function in ggplot2. We can see this for each not fully paid value by excluding
-# it in the gather() function.
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, not.fully.paid) %>%
-  gather(variable, value, -not.fully.paid) %>%
-  ggplot(aes(x = value, y = as.logical(not.fully.paid), fill = as.logical(not.fully.paid))) +
-  geom_boxplot(outlier.size = 2, outlier.alpha = 0.2) +  # Translucent and larger outliers to help with overplotting
-  guides(fill = guide_legend(reverse = TRUE)) + # So the legend order matches the order in the graphs
-  facet_wrap(~ variable, scales = "free_x") + # Free x scale so the graphs are readable
-  labs(title = "Boxplots of Numeric Variables", subtitle = "Comparing `not.fully.paid` Values",
-       x = "Value", y = "Count", fill = "Not Fully Paid") +
-  theme_minimal()
-
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
-# for each variable using the facet_wrap() function in ggplot2. We can see this for each purpose value by excluding
-# it in the gather() function.
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, purpose) %>%
-  gather(variable, value, -purpose) %>%
-  ggplot(aes(x = value, y = purpose, fill = purpose)) +
-  geom_boxplot(outlier.size = 2, outlier.alpha = 0.2) +
-  guides(fill = guide_legend(reverse = TRUE)) + # So the legend order matches the order in the graphs
-  facet_wrap(~ variable, scales = "free_x") + # Free x scale so the graphs are readable
-  labs(title = "Boxplots of Numeric Variables", subtitle = "Comparing `purpose` Values",
-       x = "Value", y = "Count", fill = "Purpose") +
-  theme_minimal()
-
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec) %>%
-  gather(variable, value) %>%
-  ggplot(aes(sample = value)) +
+  ggplot(aes(sample = revol.bal)) +
   geom_qq(color = "steelblue") +
   geom_qq_line() +
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
+  labs(title = "Q-Q Plot of Revolving Balance", x = "Theoretical", y = "Sample") +
   theme_minimal()
-```
 
-# Appendix:
-We performed z-interval tests for each variable but concluded that they are not appropriate because the standard deviation for the true population is not known. We have included them here in an appendix for reference and substantiation. 
+loans$revol.bal=log(loans$revol.bal)
 
-*OLD LANGUAGE:* Please note that in this case z test is not appropriate because we do not have an idea about the standard deviation of the population. However, in order to better understand the working algorithm of the statistical tests especially the z-score or the z-statistics and how it compares to the t-statistics.
+loans %>%
+  ggplot(aes(x = revol.bal)) +
+  geom_histogram(fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Natural Log of Revolving Balance", x = "Revolving Balance", y = "Count") +
+  theme_minimal()
 
-## Z-tests:
-
-```{r results = "show"}
-loans$revol.bal=exp(loans$revol.bal)
-# This code will perform the z-interval tests we want, but  we will show the results in a nicer looking table format
-# For the purpose of these z-interval tests we are assuming that the data is normal and therefore has a standard deviation of 2.31
-loadPkg("BSDA")
-ztest95rate = z.test(x=loans$int.rate, sigma.x = sd(loans$int.rate)) # default conf.level = 0.95
-ztest99rate = z.test(x=loans$int.rate, sigma.x = 2.31, conf.level=0.99 )
-ztest50rate = z.test(x=loans$int.rate, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95rate, ztest99rate, ztest50rate), tidy)
-tab
-png("z1.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-
-```{r results = "show"}
-ztest95installment = z.test(x=loans$installment, sigma.x = 2.31) # default conf.level = 0.95
-ztest99installment = z.test(x=loans$installment, sigma.x = 2.31, conf.level=0.99 )
-ztest50installment = z.test(x=loans$installment, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95installment,ztest99installment,ztest50installment), tidy)
-tab
-png("z2.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31) # default conf.level = 0.95
-ztest99annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31, conf.level=0.99 )
-ztest50annual = z.test(x=loans$log.annual.inc, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95annual,ztest99annual,ztest50annual), tidy)
-tab
-png("z3.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95fico = z.test(x=loans$fico, sigma.x = 2.31) # default conf.level = 0.95
-ztest99fico = z.test(x=loans$fico, sigma.x = 2.31, conf.level=0.99 )
-ztest50fico = z.test(x=loans$fico, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95fico,ztest99fico,ztest50fico), tidy)
-tab
-png("z4.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95dti = z.test(x=loans$dti, sigma.x = 2.31) # default conf.level = 0.95
-ztest99dti = z.test(x=loans$dti, sigma.x = 2.31, conf.level=0.99 )
-ztest50dti = z.test(x=loans$dti, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95dti,ztest99dti,ztest50dti), tidy)
-tab
-png("z5.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95days.with.cr.line = z.test(x=loans$days.with.cr.line, sigma.x = 2.31) # default conf.level = 0.95
-ztest99days.with.cr.line = z.test(x=loans$days.with.cr.line, sigma.x = 2.31, conf.level=0.99 )
-ztest50days.with.cr.line = z.test(x=loans$days.with.cr.line, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95days.with.cr.line,ztest99days.with.cr.line,ztest50days.with.cr.line), tidy)
-tab
-png("z6.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95revol.bal = z.test(x=loans$revol.bal, sigma.x = 2.31) # default conf.level = 0.95
-ztest99revol.bal = z.test(x=loans$revol.bal, sigma.x = 2.31, conf.level=0.99 )
-ztest50revol.bal = z.test(x=loans$revol.bal, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95revol.bal,ztest99revol.bal,ztest50revol.bal), tidy)
-tab
-png("z7.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95revol.util = z.test(x=loans$revol.util, sigma.x = 2.31) # default conf.level = 0.95
-ztest99revol.util = z.test(x=loans$revol.util, sigma.x = 2.31, conf.level=0.99 )
-ztest50revol.util = z.test(x=loans$revol.util, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95revol.util,ztest99revol.util,ztest50revol.util), tidy)
-tab
-png("z8.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95inq.last.6mths = z.test(x=loans$inq.last.6mths, sigma.x = 2.31) # default conf.level = 0.95
-ztest99inq.last.6mths = z.test(x=loans$inq.last.6mths, sigma.x = 2.31, conf.level=0.99 )
-ztest50inq.last.6mths = z.test(x=loans$inq.last.6mths, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95inq.last.6mths,ztest99inq.last.6mths,ztest50inq.last.6mths), tidy)
-tab
-png("z9.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95delinq.2yrs = z.test(x=loans$delinq.2yrs, sigma.x = 2.31)# default conf.level = 0.95
-ztest99delinq.2yrs = z.test(x=loans$delinq.2yrs, sigma.x = 2.31, conf.level=0.99 )
-ztest50delinq.2yrs = z.test(x=loans$delinq.2yrs, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95delinq.2yrs,ztest99delinq.2yrs,ztest50delinq.2yrs), tidy)
-tab
-png("z10.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
-```
-
-```{r results = "show"}
-ztest95pub.rec = z.test(x=loans$pub.rec, sigma.x = 2.31) # default conf.level = 0.95
-ztest99pub.rec = z.test(x=loans$pub.rec, sigma.x = 2.31, conf.level=0.99 )
-ztest50pub.rec = z.test(x=loans$pub.rec, sigma.x = 2.31, conf.level=0.50 )
-
-tab <- map_df(list(ztest95pub.rec,ztest99pub.rec,ztest50pub.rec), tidy)
-tab
-png("z11.png", height=100, width=700)
-p<-tableGrob(tab)
-grid.arrange(p)
-dev.off()
+loans %>%
+  ggplot(aes(sample = revol.bal)) +
+  geom_qq(color = "steelblue") +
+  geom_qq_line() +
+  labs(title = "Q-Q Plot of Natural Log of Revolving Balance", x = "Theoretical", y = "Sample") +
+  theme_minimal()
 ```
