@@ -1,0 +1,233 @@
+---
+title: "LendingClub Peer-to-Peer Loan Analysis"
+author: "Team 1: Jonathan Schild, Medhasweta Sen, Brian Gulko"
+date: "`r Sys.Date()`"
+always_allow_html: true
+output:
+  html_document:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes=
+    toc_depth: '3'
+  word_document:
+    toc: no
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+# We want the results to be hidden by default, though for some chunks we will override this to show the results
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+```
+
+```{r include=FALSE}
+library(ezids) # We will use functions form this package to get nicer looking results
+library(tidyverse) # We need this package for data manipulation, piping, and graphing
+library(corrplot) # We will need this package to plot the correlation matrix
+# library(scales) # This package will help us when labeling the scatter plots
+# library(gridExtra) # For additional table and image functionality
+# library(expss)
+library(knitr)
+library(kableExtra)
+# library(broom)
+# library(purrr)
+# Read in the data from the working directory
+loans <- read_csv("loan_data.csv")
+#loans
+```
+
+
+
+# Setup
+
+## Converting variables
+```{r}
+# We determined this makes sense to do from our EDA
+loans$credit.policy <- as.logical(loans$credit.policy)
+loans$not.fully.paid <- as.logical(loans$not.fully.paid)
+
+loans$purpose <- as.factor(loans$purpose)
+```
+
+
+
+# Variable Manipulations
+
+## Adding Logicals
+```{r}
+# It might help to turn these variables into logicals since most are 0
+loans <- loans %>%
+  mutate(has.delinq.2yrs = delinq.2yrs > 0,
+         has.pub.rec = pub.rec > 0)
+```
+
+
+## Revolving Balance Transformation
+```{r}
+# Some loans have a revol.bal value of 0, the natural log of which is -Inf
+# Adding 1 to all values before taking the natural log resolves this issue by nudging the value a very small amount
+# In case it was meaningful if the loan had a revol.bal value of 0 versus >0, we can add a logical to account for that
+loans <- loans %>%
+  mutate(log.revol.bal = log(revol.bal+1),
+         has.revol.bal = revol.bal > 0)
+```
+
+
+## Correlation plot with new variables
+```{r fig.width=7, fig.height=7, echo=FALSE}
+# A new correlation matrix with the new and transformed variables
+# For our correlation matrix we want to include everything but the purpose variable
+loans_correlation_matrix_new <- loans %>%
+  select(-purpose) %>%
+  cor()
+
+# The mixed correlation plot makes a nice visualization
+corrplot.mixed(loans_correlation_matrix_new, tl.pos = "lt")
+```
+
+
+
+# Outlier Removal
+
+## Removing the outliers
+```{r}
+# Using the outlierKD2 function from the ezids package on all numeric variables
+loans_with_outliers <- loans
+loans <- outlierKD2(loans, days.with.cr.line, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, delinq.2yrs, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, dti, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, fico, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, inq.last.6mths, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, installment, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, int.rate, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, log.annual.inc, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, pub.rec, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, revol.bal, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, revol.util, rm = TRUE, qqplt = T)
+loans <- outlierKD2(loans, log.revol.bal, rm = TRUE, qqplt = T)
+```
+
+
+## Number of outliers removed
+```{r results="show"}
+# Number of outliers for each variable
+loans %>%
+  is.na() %>%
+  as.data.frame() %>%
+  summarize_all(sum) %>%
+  gather(variable, num_outliers_removed) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+```
+
+
+## Correlation plot without outliers
+```{r fig.width=7, fig.height=7, echo=FALSE}
+# New correlation matrix with the outliers removed
+# For our correlation matrix we want to include everything but the purpose variable
+loans_correlation_matrix_new_minus_outliers <- loans %>%
+  select(-purpose) %>%
+  cor(use = "pairwise.complete.obs")
+
+# The mixed correlation plot makes a nice visualization
+corrplot.mixed(loans_correlation_matrix_new_minus_outliers, tl.pos = "lt")
+```
+
+For `delinq.2yrs` and `pub.rec`, such a large portion of the loans had the same value (zero) that anything else was considered an outlier and removed. As a result, these variables cannot have a correlation computed.
+
+
+
+# Outlier Removal Graphs
+
+## Histograms
+```{r fig.width=8, echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a histogram
+# for each variable using the facet_wrap() function in ggplot2.
+loans_with_outliers %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = "steelblue", color = "black") +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
+  theme_minimal()
+
+# Outliers removed
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = "steelblue", color = "black") +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
+  theme_minimal()
+```
+
+
+## Boxplots
+```{r fig.width=8, echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
+# for each variable using the facet_wrap() function in ggplot2.
+loans_with_outliers %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_boxplot(fill = "steelblue", color = "black",
+               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Boxplots of Numeric Variables", x = "Value") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+
+# Outliers removed
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_boxplot(fill = "steelblue", color = "black",
+               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Boxplots of Numeric Variables", x = "Value") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+```
+
+
+## Q-Q Plots
+```{r echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a Q-Q plot
+# for each variable using the facet_wrap() function in ggplot2.
+loans_with_outliers %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(sample = value)) +
+  geom_qq(color = "steelblue") +
+  geom_qq_line() +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
+  theme_minimal()
+
+# Outliers removed
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(sample = value)) +
+  geom_qq(color = "steelblue") +
+  geom_qq_line() +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
+  theme_minimal()
+```
+
+
+
+
