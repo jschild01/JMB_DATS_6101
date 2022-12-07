@@ -1,6 +1,6 @@
 ---
 title: "LendingClub Peer-to-Peer Loan Analysis"
-author: "Team 1: Jonathan Schild, Medhasweta Sen, Brian Gulko"
+author: "Team 1: Jonathan Schild, Medhasweta Sen, Brian Gulko, Bharat Premnath"
 date: "`r Sys.Date()`"
 always_allow_html: true
 output:
@@ -34,6 +34,7 @@ library(knitr)
 library(kableExtra)
 # library(broom)
 # library(purrr)
+
 # Read in the data from the working directory
 loans <- read_csv("loan_data.csv")
 #loans
@@ -41,9 +42,19 @@ loans <- read_csv("loan_data.csv")
 
 
 
-# Setup
+# Introduction
+
+We are using the same dataset from our first project. The dataset contains `r nrow(loans)` observations and `r ncol(loans)` variables and is based on loans from LendingClub, a peer-to-peer lending company, that were made from 2007 to 2015.
+
+We obtained the dataset from Kaggle here: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
+
+Our work is stored on our team GitHub here: https://github.com/jschild01/JMB_DATS_6101
+
 
 ## Converting variables
+
+From our EDA in project 1 we know that the `credit.policy` and `not.fully.paid` variables function as logicals, and the `purpose` variable functions as a factor with 7 levels. We will start by formally converting these variables.
+
 ```{r}
 # We determined this makes sense to do from our EDA
 loans$credit.policy <- as.logical(loans$credit.policy)
@@ -57,6 +68,9 @@ loans$purpose <- as.factor(loans$purpose)
 # Variable Manipulations
 
 ## Adding Logicals
+
+From our EDA we saw that the overwhelming majority of loans had a value of 0 for `delinq.2yrs` and `pub.rec`. The variables might be more useful in terms of having stronger correlations and a larger impact in models if we create logical versions of these variables. We will introduce `has.delinq.2yrs` and `has.pub.rec` based on whether or not the value is 0 or greater than 0.
+
 ```{r}
 # It might help to turn these variables into logicals since most are 0
 loans <- loans %>%
@@ -66,6 +80,11 @@ loans <- loans %>%
 
 
 ## Revolving Balance Transformation
+
+From our EDA we saw that the `revol.bal` variable had a wide range of values as well as outlier issues. We wondered if it would work better if we took the natural log of it, similar to how the income provided in the dataset the dataset (the `log.annual.inc` variable) is in the form of the natural log. However, some values for `revol.bal` are 0, and taking the natural log of that results in -Inf. One way to deal with this without removing those values is to add 1 to all of the values for `revol.bal` before taking the natural log. 
+
+Given the range of these values (the IQr is `r IQR(loans$revol.bal)`) adding one should have a negligible effect, and adding one to all values keeps the data consistent. In case it is significant that the `revol.bal` is 0 we will add a logical variable `has.revol.bal` based on whether the value of `revol.bal` is 0 or greater than 0.
+
 ```{r}
 # Some loans have a revol.bal value of 0, the natural log of which is -Inf
 # Adding 1 to all values before taking the natural log resolves this issue by nudging the value a very small amount
@@ -77,22 +96,44 @@ loans <- loans %>%
 
 
 ## Correlation plot with new variables
-```{r fig.width=7, fig.height=7, echo=FALSE}
+
+Now that we have added some new variables, it would be helpful to look at a correlation plot and make some comparisons.
+
+```{r fig.width=8, fig.height=8, echo=FALSE}
 # A new correlation matrix with the new and transformed variables
 # For our correlation matrix we want to include everything but the purpose variable
+# We can put the new variables together at the top
 loans_correlation_matrix_new <- loans %>%
   select(-purpose) %>%
+  select(revol.bal, log.revol.bal, has.revol.bal, has.delinq.2yrs, has.pub.rec, everything()) %>%
   cor()
 
 # The mixed correlation plot makes a nice visualization
 corrplot.mixed(loans_correlation_matrix_new, tl.pos = "lt")
 ```
 
+Some notable observations of this:
+1. `has.delinq.2yrs` doesn't have any strong correlations, and the 2 potentially useful ones (`int.rate` and `fico`) are almost exactly the same as `delinq.2yrs`.
+2. Similarly, `has.pub.rec` doesn't have any strong correlations, and the 2 potentially useful ones (`int.rate` and `fico`) are   the same as `pub.rec`.
+3. `log.revol.bal` has a stronger correlation with `dti` and a much stronger correlation with `revol.util` compared to `revol.bal`.
+4. `log.revol.bal` has a weaker correlation with `credit.policy` compared to `revol.bal`.
+5. `has.revol.bal` does not have a significant correlation with anything (`log.revol.bal` excepted) except `revol.util`, where the correlation is significantly weaker than that of `log.revol.bal`.
+
+
+From this we can conclude that converting `delinq.2yrs` and `pub.rec` to logicals did not add anything useful to our data. Still, it was worth checking. 
+
+We can also conclude that the `has.revol.bal` variable is not necessary and will not add anything to our analysis that `log.revol.bal` doesn't already cover better. Still, it was good to check.
+
+Taking the natural log of `revol.bal` might be useful, as `log.revol.bal` has some stronger correlations than `revol.bal`
+
 
 
 # Outlier Removal
 
 ## Removing the outliers
+
+At this point, to improve the quality of our data, it would be helpful to remove outliers from our numeric variables, including the new `log.revol.bal` variable.
+
 ```{r}
 # Using the outlierKD2 function from the ezids package on all numeric variables
 loans_with_outliers <- loans
@@ -112,6 +153,9 @@ loans <- outlierKD2(loans, log.revol.bal, rm = TRUE, qqplt = T)
 
 
 ## Number of outliers removed
+
+To help us understand the effect this had, let's put together a table to show how many outliers were removed from each variable.
+
 ```{r results="show"}
 # Number of outliers for each variable
 loans %>%
@@ -123,9 +167,13 @@ loans %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
+We can see `delinq.2yrs` had the most outliers followed by `revol.bal`. Notably, `log.revol.bal` had fewer outliers than `revol.bal` (`r (sum(is.na(loans$log.revol.bal)))` vs `r (sum(is.na(loans$revol.bal)))`).
 
 ## Correlation plot without outliers
-```{r fig.width=7, fig.height=7, echo=FALSE}
+
+With the outliers removed, it is worth making another correlation plot to see how removing the outliers affects the correlations between variables.
+
+```{r fig.width=8, fig.height=8, echo=FALSE}
 # New correlation matrix with the outliers removed
 # For our correlation matrix we want to include everything but the purpose variable
 loans_correlation_matrix_new_minus_outliers <- loans %>%
@@ -138,9 +186,12 @@ corrplot.mixed(loans_correlation_matrix_new_minus_outliers, tl.pos = "lt")
 
 For `delinq.2yrs` and `pub.rec`, such a large portion of the loans had the same value (zero) that anything else was considered an outlier and removed. As a result, these variables cannot have a correlation computed.
 
-
+To add: Other observations about the impact of removing variables.
 
 # Outlier Removal Graphs
+
+Now that we have our final dataset, we can revisit our histograms, boxplots, and q-q plots to see how they look with the new variables and outliers removed compared to the dataset with outliers.
+
 
 ## Histograms
 ```{r fig.width=8, echo=FALSE}
@@ -227,6 +278,78 @@ loans %>%
   labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
   theme_minimal()
 ```
+
+
+To add: observations about the differences.
+
+
+
+# Classification Tree
+
+Building the classification tree model and looking at the results:  
+```{r, results='markup', fig.dim=c(6,4)}
+loadPkg("rpart") # Classification trees, rpart(formula, data=, method=,control=) 
+set.seed(1)
+creditfit <- rpart(credit.policy ~ int.rate + fico + inq.last.6mths, data=loans, method="class", control = list(maxdepth = 4) )
+printcp(creditfit) # display the results 
+plotcp(creditfit) # visualize cross-validation results 
+```
+
+Summary of the split:
+```{r results='markup'}
+# xkablesummary(kyphosisfit) # does not work on this model object yet
+summary(creditfit) # detailed summary of splits
+# Not nice way to display result/summary like this. Might try find some better methods.
+```
+
+```{r results='markup'}
+# plot tree 
+plot(creditfit, uniform=TRUE, main="Classification Tree for credit.policy")
+text(creditfit, use.n=TRUE, all=TRUE, cex=.75)
+
+```
+
+```{r}
+# create a postscript plot of tree 
+post(creditfit, file = "credittree2.ps", title = "Classification Tree for credit.policy")
+```
+
+
+```{r}
+loadPkg("caret") 
+cm = confusionMatrix( predict(creditfit, type = "class"), reference = kyphosis[, "Kyphosis"] )
+print('Overall: ')
+cm$overall
+print('Class: ')
+cm$byClass
+unloadPkg("caret")
+#The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
+```
+
+
+From the Trees.rmd file:
+The overall accuracy is `r round(cm$overall["Accuracy"]*100, digits=2)`%. These are the same metrics of sensitivity (also known as recall rate, TP / (TP+FN) ), specificity (TN / (TN+FP) ), F1 score, and others that we used in Logistic Regression and KNN analyses. Indeed, any "classifiers" can use the confustion matrix approach as one of the evaluation tools.  
+
+```{r, results="markup"}
+xkabledply(cm$table, title = "Confusion matrix for the tree model")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
