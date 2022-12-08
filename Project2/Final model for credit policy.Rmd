@@ -1,0 +1,222 @@
+---
+---
+title: "fINAL MODEL FOR CREDIT POLICY"
+author: "MEDHASWETA SEN"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r include=FALSE}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+library(ezids)
+ 
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+options(scientific=T, digits = 3) 
+# options(scipen=9, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+
+```{r base_lib}
+loadPkg("ggplot2")
+```
+
+# LogRegcredit.policy Dataset (Admissions data)
+
+## Initialize
+
+```{r}
+# credit.policy <- data.frame(read.csv("LogRegcredit.policy.csv")) 
+df <- read.csv("loan_data.csv")
+head(df)
+summary(df)
+str(df)
+sum(is.na(df))
+```
+
+Let us first use the dataset that we are familiar with -- admissions dataset. We have looked at it many different times, using different techniques and methods. We will first re-visit those methods as practices, then try our new logistic regression model. Other than logistic regression, there are yet many more we can learn to analyse the same piece of information. We can use use Tree/Forest methods, KNN, SVM, etc. They all have their strength and weaknesses. First, let us load up the dataframe and take a quick look at the `head()` and `summary()`. Current settings do not show these output in html.
+
+```{r results='markup'}
+xkablesummary(df)
+```
+
+We can also find sd or other statistics of the variables using the `sapply()` function, and display as a table.
+
+```{r sapply}
+# find  sd for all columns, using sapply
+varSD = sapply(df, sd)
+varSD
+```
+
+```{r results='markup'}
+xkabledply(as.table(varSD), title = "The sd for each variable in credit.policy", wide = TRUE)
+```
+
+## Effects on Admission by purpose
+
+To study the effects on admission by the factor purpose (credit.policy and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
+\*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
+
+```{r crosstable}
+credit.policypurposetable = xtabs(~ credit.policy + purpose, data = df)
+credit.policypurposetable
+```
+
+## Logistic Regression Model
+
+Let us now turn our attention to logistic regression models. Knowing that there is very like an effect on admission by purposes, we run the full model including purpose as well as GRE and GPA.
+
+```{r logitmodel}
+df$credit.policy <- factor(df$credit.policy)
+str(df)
+df$purpose <- factor(df$purpose)
+#str(credit.policy)
+credit.policyLogit <- glm(credit.policy ~purpose+log.annual.inc+revol.bal+fico+revol.util+pub.rec+inq.last.6mths , data = df, binomial(link = "logit") )  
+```
+
+We can see the summary of the logit model here:
+
+```{r}
+summary(credit.policyLogit)
+```
+
+```{r results='markup'}
+xkabledply(credit.policyLogit, title = "Logistic Regression :")
+```
+
+All the coefficients are found significant (small p-values). GRE and GPA have positive effects on admission chance (credit.policy = 1), while "higher" purpose (purpose = 4 is highest) negatively affect the admission's likelihood. These are reasonable results and confirms our common beliefs.
+
+
+Before moving on, let us look at the model object `credit.policyLogit` a little deeper. The fitted values can be found from `credit.policyLogit$fitted.values`. And the first fitted value is `r credit.policyLogit$fitted.values[1]`. This is the probability of being credit.policyted for data point #1. Compare to the value from `predict(credit.policyLogit)` to be `r predict(credit.policyLogit)[1]`. 
+
+The `predict()` function gives us the logit value. You can exponentiate to get the odds ratio p/q as `r exp(predict(credit.policyLogit)[1])`. And finally, we can find p from p/q, and indeed it is confirmed to be `r 1/(1+exp(-predict(credit.policyLogit)[1]))`.
+
+The easier way to get that is simply use `predict(credit.policyLogit, type = c("response"))[1]` = `r predict(credit.policyLogit, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
+
+```{r logit_fitted_value}
+p_fitted = credit.policyLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
+```
+
+This is stored in the model as the fitted value for the probability `p` of the first data point. Since the actual data point is a 0/1 True/False value, it is not easy to directly compare them unless we use a cutoff value (default as 0.5) to convert the probability `p` to 0/1.
+
+Now, for unseen data point, we can use the `predict( )` function to find the model predicted values. But be careful of what you are getting with the `predict()` function in classification models. Let us compare the three options below. For easy comparison, let us use the same data point in the dataset as an example.
+
+```{r}
+# This gives you the predicted values of the data points inside the model.
+predict(credit.policyLogit)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
+```
+
+**The three options for the `predict()` function in Logit regression:**
+
+-   The "response" option `predict(model, newdata=..., type="response") -> pred_response` nicely gives you the probability *p* directly as `r pred_response`.\
+-   The "link" option `predict(model, newdata=..., type="link") -> pred_link` which is the default option, gives you the value of the link function. Remember the link function is\
+    `logit(p) = log(p/q) = log(p/1-p)`. The value here is `r pred_link`.\
+-   The third option of "term", `predict(model, newdata=..., type="term") -> pred_term`, gives you the individual term contributions. Notice that the constant is also in this "term" object, but it is difficult to use. The three terms (slopes) are like values in a vector here: `pred_term` = [`r pred_term`], while the "intercept term $b_0$" is stored as an attribute `attr(pred_term,"constant")`: `r attr(pred_term,"constant")`.\
+    Note that the sum of all these four values equal to the value of the link function above: `r pred_term[1]` + `r pred_term[2]` + `r pred_term[3]` + `r attr(pred_term,"constant")` = `r sum(pred_term) + attr(pred_term,"constant")`.
+
+
+A quick summary, these different ways of calculating the same thing, which is the predicted probability values from the model.
+
+-   Use the built-in type option `predict(credit.policyLogit, newdata=newdata1, type="response")` to get the *p* value: `r pred_response`
+-   Use the link function value `predict(credit.policyLogit, newdata = newdata1, type = "link")` (or without the type argument, since this is the default), to calculate the value *p* `from 1/(1+exp( -linkFunctionValue ))`: `r`1/(1+exp(-pred_link)\`\
+-   First find the odds-ratio from exponential of the link-value-function: `r oddsratio`, then calculate the predicted *p* value from `oddsratio / (oddsratio + 1)` = `r oddsratio / (oddsratio + 1)`
+
+### Confidence Intervals
+
+We can easily determin the confidence intervals of each coefficient with these two slightly different ways:
+
+```{r ConfInt, results='markup', collapse=F}
+## CIs using profiled log-likelihood
+# confint(credit.policyLogit)
+xkabledply( confint(credit.policyLogit), title = "CIs using profiled log-likelihood" )
+## CIs using standard errors
+# confint.default(credit.policyLogit)
+xkabledply( confint.default(credit.policyLogit), title = "CIs using standard errors" )
+```
+
+### Model evaluation
+
+#### Confusion matrix
+
+This is just one of the many libraries you can find the confusion matrix. It is easy to use, but not very powerful, lacking ability to choose cutoff value, and it does not give you all the metrics like accuracy, precision, recall, sensitivity, f1 score etc. Nonetheless, it's handy.
+
+```{r confusionMatrix, results='markup'}
+loadPkg("regclass")
+# confusion_matrix(credit.policyLogit)
+xkabledply( confusion_matrix(credit.policyLogit), title = "Confusion matrix from Logit Model" )
+unloadPkg("regclass")
+```
+
+
+#### Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC)
+
+Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures the true positive rate (or sensitivity) against the false positive rate (or specificity). The area-under-curve is always between 0.5 and 1. Values higher than 0.8 is considered good model fit.
+
+```{r roc_auc}
+loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+prob=predict(credit.policyLogit, type = "response" )
+df$prob <- NA
+df$prob=prob
+h <- roc(credit.policy~prob, data=df)
+auc(h) # area-under-curve prefer 0.8 or higher.
+plot(h)
+# unloadPkg("pROC")
+head(df)
+```
+
+We have here the area-under-curve of `r auc(h)`, which is less than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is not considered a good fit.
+
+#### END ##
+
+
+
+
+
+#### McFadden
+
+McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
+
+```{r McFadden_direct}
+credit.policyNullLogit <- glm(credit.policy ~ 1, data = df, family = "binomial")
+mcFadden = 1 - logLik(credit.policyLogit)/logLik(credit.policyNullLogit)
+mcFadden
+```
+
+Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) will do the trick.
+
+```{r McFadden}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+credit.policyLogitpr2 = pR2(credit.policyLogit)
+credit.policyLogitpr2
+unloadPkg("pscl") 
+```
+
+With the McFadden value of `r credit.policyLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 8% of the variations in y is explained by the explanatory variables in the model.
+
+A major weakness of the overall model is likely from the small dataset sample size of `r length(credit.policy$credit.policy)`. We expect a much higher number of observations will increase the sensitivity of the model.
+
+#### Hosmer and Lemeshow test
+
+The Hosmer and Lemeshow Goodness of Fit test can be used to evaluate logistic regression fit.
+
+```{r HosmerLemeshow}
+loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+```
+
+```{r}
+credit.policyLogitHoslem = hoslem.test(df$credit.policy, fitted(credit.policyLogit)) # Hosmer and Lemeshow test, a chi-squared test
+```
+
+The result is shown here:
+
+```{r HosmerLemeshowRes, results='markup', collapse=F}
+credit.policyLogitHoslem
+# Have not found a good way to display it.
+```
+
+The p-value of `r credit.policyLogitHoslem$p.value` is relatively high. This indicates the model is not really a good fit, despite all the coefficients are significant.
+
