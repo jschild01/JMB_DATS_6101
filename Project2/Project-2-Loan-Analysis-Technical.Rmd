@@ -34,6 +34,9 @@ library(knitr)
 library(kableExtra)
 # library(broom)
 # library(purrr)
+library(rpart) # For the classification tree model
+library(caret) # For the classification tree model
+set.seed(1) # For the classification tree model
 
 # Read in the data from the working directory
 loans <- read_csv("loan_data.csv")
@@ -44,7 +47,7 @@ loans <- read_csv("loan_data.csv")
 
 # Introduction
 
-We are using the same dataset from our first project. The dataset contains `r nrow(loans)` observations and `r ncol(loans)` variables and is based on loans from LendingClub, a peer-to-peer lending company, that were made from 2007 to 2015.
+We are using the same dataset from our first project. The dataset contains `r nrow(loans)` observations and `r ncol(loans)` variables and is based on loans from LendingClub, a peer-to-peer lending company, that were made from 2007 to 2015. Of the `r ncol(loans)` variables, 
 
 We obtained the dataset from Kaggle here: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
 
@@ -62,6 +65,8 @@ loans$not.fully.paid <- as.logical(loans$not.fully.paid)
 
 loans$purpose <- as.factor(loans$purpose)
 ```
+
+Of the `r ncol(loans)` variables in the dataset, 11 are numeric, 2 are logical, and 1 is a factor.
 
 
 
@@ -99,7 +104,7 @@ loans <- loans %>%
 
 Now that we have added some new variables, it would be helpful to look at a correlation plot and make some comparisons.
 
-```{r fig.width=8, fig.height=8, echo=FALSE}
+```{r fig.width=8, fig.height=8}
 # A new correlation matrix with the new and transformed variables
 # For our correlation matrix we want to include everything but the purpose variable
 # We can put the new variables together at the top
@@ -187,6 +192,8 @@ corrplot.mixed(loans_correlation_matrix_new_minus_outliers, tl.pos = "lt")
 For `delinq.2yrs` and `pub.rec`, such a large portion of the loans had the same value (zero) that anything else was considered an outlier and removed. As a result, these variables cannot have a correlation computed.
 
 To add: Other observations about the impact of removing variables.
+
+This version of our dataset with outliers removed will serve as our final dataset which we will use in our models for the rest of this project.
 
 # Outlier Removal Graphs
 
@@ -286,63 +293,134 @@ To add: observations about the differences.
 
 # Classification Tree
 
-Building the classification tree model and looking at the results:  
-```{r, results='markup', fig.dim=c(6,4)}
-loadPkg("rpart") # Classification trees, rpart(formula, data=, method=,control=) 
-set.seed(1)
-creditfit <- rpart(credit.policy ~ int.rate + fico + inq.last.6mths, data=loans, method="class", control = list(maxdepth = 4) )
+## Tree Setup
+Since one of our variables of intrest, `credit.policy` is a logical, we can treat is as a 2-level factor and build a classification tree model using the variables it has significant correlation with, in this case `int.rate`, `fico`, and `inq.last.6mths`.
+
+For this variable we are interested in the loans where the value is `FALSE`. That is, loans that do not meet the credit underwriting criteria, and therefore are more at risk of defaulting. These loans are in the minority. We will rename the `FALSE` values to `Fail`, indicating that the loan fails to meet the underwriting criteria, and rename the `TRUE` values to `Meets`, indicating that the loan meets the underwriting criteria.
+
+```{r}
+# Since we are renaming some values let's make a separate dataset for this model
+loans_tree <- loans
+
+# First convert the credit.policy variable from a logical to a factor, then rename the levels
+loans_tree$credit.policy <- as.factor(loans_tree$credit.policy) %>%
+  fct_recode(Meets = "TRUE", Fails = "FALSE")
+```
+
+
+## Building the Tree
+
+We start by building the classification tree model.
+```{r results="show", fig.dim=c(6,4)}
+# Max depth of 4 based on Professor Faruqe's instructions
+creditfit <- rpart(credit.policy ~ int.rate + fico + inq.last.6mths, data=loans_tree, method="class", control = list(maxdepth = 4) )
 printcp(creditfit) # display the results 
 plotcp(creditfit) # visualize cross-validation results 
 ```
 
-Summary of the split:
-```{r results='markup'}
-# xkablesummary(kyphosisfit) # does not work on this model object yet
+We can see that `int.rate` was not used in the model, but `fico`, and `inq.last.6mths` were.
+
+To add: more comments on results
+
+
+Summary of the splits.
+```{r}
+# Show these results??
 summary(creditfit) # detailed summary of splits
-# Not nice way to display result/summary like this. Might try find some better methods.
 ```
 
-```{r results='markup'}
-# plot tree 
+To add: comments on results
+
+
+## Visualizing the Tree
+
+We can plot the model to visualize it.
+```{r}
+# plot the tree and add text
 plot(creditfit, uniform=TRUE, main="Classification Tree for credit.policy")
 text(creditfit, use.n=TRUE, all=TRUE, cex=.75)
 
 ```
 
+To add: comments on results
+
+This produces a nice visualization of the tree.
 ```{r}
 # create a postscript plot of tree 
 post(creditfit, file = "credittree2.ps", title = "Classification Tree for credit.policy")
 ```
+To add: can we include the image created?
 
 
-```{r}
-loadPkg("caret") 
-cm = confusionMatrix( predict(creditfit, type = "class"), reference = kyphosis[, "Kyphosis"] )
+## Confusion Matrix
+
+To better understand how our model performs we can construct a confusion matrix of the results. The `Fails` values will function as the positive cases for the confusion matrix we put together based on the results of the classification tree model.
+```{r results="show"}
+# Creating the confusion matrix
+confusion_matrix = confusionMatrix(predict(creditfit, type = "class"), reference = loans_tree$credit.policy)
 print('Overall: ')
-cm$overall
+confusion_matrix$overall
 print('Class: ')
-cm$byClass
-unloadPkg("caret")
+confusion_matrix$byClass
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
 ```
+Based on the Kappa statistic of `r round(confusion_matrix$overall["Kappa"], digits=2)` we would evaluate this classifier as substantial.
 
+To add: other comments on the overall stats of the model.
 
 From the Trees.rmd file:
-The overall accuracy is `r round(cm$overall["Accuracy"]*100, digits=2)`%. These are the same metrics of sensitivity (also known as recall rate, TP / (TP+FN) ), specificity (TN / (TN+FP) ), F1 score, and others that we used in Logistic Regression and KNN analyses. Indeed, any "classifiers" can use the confustion matrix approach as one of the evaluation tools.  
+The overall accuracy is `r round(confusion_matrix$overall["Accuracy"]*100, digits=2)`%. These are the same metrics of sensitivity (also known as recall rate, TP / (TP+FN) ), specificity (TN / (TN+FP) ), F1 score, and others that we used in Logistic Regression and KNN analyses. Indeed, any "classifiers" can use the confusion matrix approach as one of the evaluation tools. 
 
-```{r, results="markup"}
-xkabledply(cm$table, title = "Confusion matrix for the tree model")
+
+Let's put together tables to visualize the confusion matrix as well some statistics on it.
+
+```{r results="show"}
+# Creating the confusion matrix table
+# To get a table that follows the same format as our notes, with the rows representing true values and columns representing predicted values, we will have to adjust the data a bit.
+
+# Start by converting to a data.frame
+cm_table <- as.data.frame(confusion_matrix$table) %>%
+  rename(Actual = "Reference")
+
+# Make it so that the rows represent true values and columns represent predicted values
+cm_table$Prediction <- paste0("Prediction - ", cm_table$Prediction)
+cm_table <- spread(cm_table, Prediction, Freq)
+
+# Output a nice table
+# xkabledply(cm_table, title = "Confusion matrix for the tree model")
+cm_table %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+
+## Can we highlight the values in the first column ("Actual") using kable??
 ```
 
+```{r results="show"}
+#Creating a table for the confusion matrix statistics
+# Start by converting to a data.frame
+cm_stats <- as.data.frame(confusion_matrix$byClass) %>%
+  rownames_to_column()
+
+# Adjust the column names and values to look better
+colnames(cm_stats) <- c("Statistic", "Percentage")
+cm_stats$Percentage <- paste0(round(cm_stats$Percentage*100, digits=1), "%")
+
+# Output a nice table
+# xkabledply(cm_stats, title = "Confusion matrix statistics for the tree model")
+cm_stats %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+```
+
+For certain statistics this model performs extremely well, with  near 100% specificity, precision, and positive prediction value. Negative prediction value is also very high at around 90%. 
+
+To add: further comments on the statistics of the model.
 
 
 
+## ROC Curve
 
-
-
-
-
-
+Add this??
 
 
 
