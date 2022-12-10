@@ -447,6 +447,89 @@ loans %>%
 
 
 
+# Multiple Linear Regression
+
+```{r}
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+# load the dataset
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# train the model
+class(df$not.fully.paid)
+model <- train(int.rate~., data=df, method="lm", preProcess="scale", trControl=control)
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+#names(getModelInfo())
+```
+```{r}
+model <- lm(int.rate ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data = df)
+summary(model)
+```
+
+```{r}
+model$coefficients
+model$call
+```
+
+```{r results='markup'}
+coef(model)
+confint(model)
+```
+```{r}
+library("broom")
+
+tidyfinal <-  tidy(model)
+tidyfinal
+
+Model_Summary <- augment(model)
+str(Model_Summary)
+head(Model_Summary)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(fit1)
+```
+```{r}
+vif(model)
+```
+
+```{r}
+lmtest::bptest(model)
+```
+
+```{r}
+car::ncvTest(model)
+```
+```{r}
+distBCMod <- caret::BoxCoxTrans(df$int.rate)
+print(distBCMod)
+
+```
+
+```{r}
+df <- cbind(df, dist_new=predict(distBCMod, df$int.rate)) 
+head(df) 
+```
+```{r}
+mod1 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=df)
+summary(mod1)
+lmtest::bptest(mod1)
+```
+
+```{r}
+plot(mod1)
+```
+
+
+
 # Logistic Regression Credit Policy
 
 ## Effects on Admission by purpose
