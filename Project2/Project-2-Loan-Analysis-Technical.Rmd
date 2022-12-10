@@ -449,6 +449,9 @@ loans %>%
 
 # Multiple Linear Regression
 
+library(car)
+```
+
 ```{r}
 set.seed(7)
 # load the library
@@ -458,8 +461,8 @@ library(caret)
 # prepare training scheme
 control <- trainControl(method="repeatedcv", number=10, repeats=3)
 # train the model
-class(df$not.fully.paid)
-model <- train(int.rate~., data=df, method="lm", preProcess="scale", trControl=control)
+class(loans$not.fully.paid)
+model <- train(int.rate~., data=loans, method="lm", preProcess="scale", trControl=control)
 # estimate variable importance
 importance <- varImp(model, scale=FALSE)
 # summarize importance
@@ -469,7 +472,7 @@ plot(importance)
 #names(getModelInfo())
 ```
 ```{r}
-model <- lm(int.rate ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data = df)
+model <- lm(int.rate ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data = loans)
 summary(model)
 ```
 
@@ -495,7 +498,7 @@ head(Model_Summary)
 
 ```{r}
 par(mfrow=c(2,2))
-plot(fit1)
+plot(model)
 ```
 ```{r}
 vif(model)
@@ -509,17 +512,17 @@ lmtest::bptest(model)
 car::ncvTest(model)
 ```
 ```{r}
-distBCMod <- caret::BoxCoxTrans(df$int.rate)
+distBCMod <- caret::BoxCoxTrans(loans$int.rate)
 print(distBCMod)
 
 ```
 
 ```{r}
-df <- cbind(df, dist_new=predict(distBCMod, df$int.rate)) 
-head(df) 
+loans <- cbind(loans, dist_new=predict(distBCMod, loans$int.rate)) 
+head(loans) 
 ```
 ```{r}
-mod1 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=df)
+mod1 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans)
 summary(mod1)
 lmtest::bptest(mod1)
 ```
