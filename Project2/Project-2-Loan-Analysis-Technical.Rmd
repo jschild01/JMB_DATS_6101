@@ -27,7 +27,7 @@ knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 library(ezids) # We will use functions form this package to get nicer looking results
 library(tidyverse) # We need this package for data manipulation, piping, and graphing
 library(corrplot) # We will need this package to plot the correlation matrix
-# library(scales) # This package will help us when labeling the scatter plots
+library(scales) # This package will help us when labeling the scatter plots
 # library(gridExtra) # For additional table and image functionality
 # library(expss)
 library(knitr)
@@ -39,6 +39,7 @@ library(caret) # For the classification tree model
 set.seed(1) # For the classification tree model
 library(rpart.plot) # For plotting nice looking classification trees
 library(pROC) # For ROC/AUC
+library(car)
 
 # Read in the data from the working directory
 loans <- read_csv("loan_data.csv")
@@ -134,164 +135,6 @@ Lastly, we see that taking the natural log of `revol.bal` might be useful, as `l
 
 
 
-## Outlier Removal
-
-### Removing the outliers
-
-At this point, to improve the quality of our data, it would be helpful to remove outliers from our numeric variables, including the new `log.revol.bal` variable.
-
-```{r}
-# Using the outlierKD2 function from the ezids package on all numeric variables
-loans_with_outliers <- loans
-loans <- outlierKD2(loans, days.with.cr.line, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, delinq.2yrs, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, dti, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, fico, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, inq.last.6mths, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, installment, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, int.rate, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, log.annual.inc, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, pub.rec, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, revol.bal, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, revol.util, rm = TRUE, qqplt = T)
-loans <- outlierKD2(loans, log.revol.bal, rm = TRUE, qqplt = T)
-```
-
-
-### Number of outliers removed
-
-To help us understand the effect this had, let's put together a table to show how many outliers were removed from each variable.
-
-```{r results="show"}
-# Number of outliers for each variable
-loans %>%
-  is.na() %>%
-  as.data.frame() %>%
-  summarize_all(sum) %>%
-  gather(variable, num_outliers_removed) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
-```
-
-We can see `delinq.2yrs` had the most outliers followed by `revol.bal`. Notably, `log.revol.bal` had fewer outliers than `revol.bal` (`r (sum(is.na(loans$log.revol.bal)))` vs `r (sum(is.na(loans$revol.bal)))`).
-
-### Correlation plot without outliers
-
-With the outliers removed, it is worth making another correlation plot to see how removing the outliers affects the correlations between variables.
-
-```{r fig.width=8, fig.height=8, echo=FALSE}
-# New correlation matrix with the outliers removed
-# For our correlation matrix we want to include everything but the purpose variable
-loans_correlation_matrix_new_minus_outliers <- loans %>%
-  select(-purpose) %>%
-  cor(use = "pairwise.complete.obs")
-
-# The mixed correlation plot makes a nice visualization
-corrplot.mixed(loans_correlation_matrix_new_minus_outliers, tl.pos = "lt")
-```
-
-For `delinq.2yrs` and `pub.rec`, such a large portion of the loans had the same value (zero) that anything else was considered an outlier and removed. As a result, these variables cannot have a correlation computed.
-
-To add: Other observations about the impact of removing variables.
-
-This version of our dataset with outliers removed will serve as our final dataset which we will use in our models for the rest of this project.
-
-## Outlier Removal Graphs
-
-Now that we have our final dataset, we can revisit our histograms, boxplots, and q-q plots to see how they look with the new variables and outliers removed compared to the dataset with outliers.
-
-
-### Histograms
-```{r fig.width=8, echo=FALSE}
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a histogram
-# for each variable using the facet_wrap() function in ggplot2.
-loans_with_outliers %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
-  geom_histogram(fill = "steelblue", color = "black") +
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
-  theme_minimal()
-
-# Outliers removed
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
-  geom_histogram(fill = "steelblue", color = "black") +
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
-  theme_minimal()
-```
-
-
-### Boxplots
-```{r fig.width=8, echo=FALSE}
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
-# for each variable using the facet_wrap() function in ggplot2.
-loans_with_outliers %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
-  geom_boxplot(fill = "steelblue", color = "black",
-               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Boxplots of Numeric Variables", x = "Value") +
-  theme_minimal() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
-
-# Outliers removed
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
-  geom_boxplot(fill = "steelblue", color = "black",
-               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Boxplots of Numeric Variables", x = "Value") +
-  theme_minimal() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
-```
-
-
-### Q-Q Plots
-```{r echo=FALSE}
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a Q-Q plot
-# for each variable using the facet_wrap() function in ggplot2.
-loans_with_outliers %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(sample = value)) +
-  geom_qq(color = "steelblue") +
-  geom_qq_line() +
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
-  theme_minimal()
-
-# Outliers removed
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(sample = value)) +
-  geom_qq(color = "steelblue") +
-  geom_qq_line() +
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
-  theme_minimal()
-```
-
-
-To add: observations about the differences.
-
-
-
 # Classification Tree
 
 ## Preparing and Building the Tree
@@ -303,8 +146,7 @@ Building the classification tree, we can see that `int.rate` was not used in the
 
 ```{r results="show", fig.dim=c(6,4)}
 # Since we are renaming some values let's make a separate dataset for this model
-# loans_tree <- loans
-loans_tree <- loans_with_outliers
+loans_tree <- loans
 
 # First convert the credit.policy variable from a logical to a factor, then rename the levels
 loans_tree$credit.policy <- as.factor(loans_tree$credit.policy) %>%
@@ -439,8 +281,8 @@ Can we do this for this type of model?
 ```{r}
 library(pROC)
 
-loans_tree$prediction <- predict(creditfit, type = "vector")
-# loans_tree$prediction <- predict(creditfit, type = "prob")[,2]
+# loans_tree$prediction <- predict(creditfit, type = "vector")
+loans_tree$prediction <- predict(creditfit, type = "prob")[,2]
 tree_roc <- roc(credit.policy ~ prediction, data=loans_tree)
 auc(tree_roc) # area-under-curve prefer 0.8 or higher.
 plot(tree_roc)
@@ -450,6 +292,458 @@ plot(tree_roc)
 
 
 The AUC of the ROC is `r auc(tree_roc)`, which is greater than the 0.8 threshold, so we would consider this to be a good indicator/model.
+
+
+
+# Simple Linear Regression
+
+## Interest Rate vs FICO Score
+
+```{r}
+# fit linear model
+linear_model <- lm(int.rate ~ fico, data=loans)
+  
+# view summary of linear model
+summary(linear_model)
+
+# scatterplot with regression line and confidence interval
+# scatterplot(int.rate ~ fico, data = loans)
+
+loans %>%
+  ggplot(aes(x = fico, y = int.rate)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  geom_smooth(method = "lm", se = T) +
+  labs(title = "Interest Rate vs FICO Score",
+       x = "FICO Score", y = "Interest Rate") +
+  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
+  theme_minimal()
+```
+
+
+
+## Revolving Utilization Rate vs Interest Rate
+
+```{r}
+# fit linear model
+linear_model <- lm(revol.util ~ int.rate, data=loans)
+  
+# view summary of linear model
+summary(linear_model)
+
+# scatterplot with regression line and confidence interval
+# scatterplot(revol.util ~ int.rate, data = loans)
+
+loans %>%
+  ggplot(aes(x = int.rate, y = revol.util)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  geom_smooth(method = "lm") +
+  labs(title = "Revolving Line Utilization Rate vs Interest Rate",
+       x = "Interest Rate", y = "Revolving Line Utilization Rate") +
+  scale_x_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  theme_minimal()
+```
+
+
+## Installment vs Natural Log of Annual Income
+
+```{r}
+# fit linear model
+linear_model <- lm(installment ~ log.annual.inc, data=loans)
+  
+# view summary of linear model
+summary(linear_model)
+
+# scatterplot with regression line and confidence interval
+# scatterplot(installment ~ log.annual.inc, data = loans)
+
+loans %>%
+  ggplot(aes(x = log.annual.inc, y = installment)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  geom_smooth(method = "lm") +
+  labs(title = "Installment vs Log of Annual Income",
+       x = "Log of Annual Income", y = "Installment") +
+  theme_minimal()
+```
+
+
+## Revolving Utilization Rate vs FICO Score
+
+```{r}
+# fit linear model
+linear_model <- lm(revol.util ~ fico, data=loans)
+  
+# view summary of linear model
+summary(linear_model)
+
+# scatterplot with regression line and confidence interval
+# scatterplot(revol.util ~ fico, data = loans)
+
+loans %>%
+  ggplot(aes(x = fico, y = revol.util)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  geom_smooth(method = "lm") +
+  labs(title = "Revolving Line Utilization Rate vs FICO Score",
+       x = "FICO Score", y = "Revolving Line Utilization Rate") +
+  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  theme_minimal()
+```
+
+
+
+# Logistic Regression Credit Policy
+
+## Effects on Admission by purpose
+
+To study the effects on admission by the factor purpose (credit.policy and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
+\*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
+
+```{r crosstable}
+credit.policypurposetable = xtabs(~ credit.policy + purpose, data = df)
+credit.policypurposetable
+```
+
+## feature selection
+```{r}
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+# load the dataset
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# train the model
+class(df$credit.policy)
+model <- train(credit.policy~., data=df, method="glm", preProcess="scale", trControl=control)
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+#names(getModelInfo())
+```
+
+
+
+
+## Logistic Regression Model
+
+
+```{r logitmodel}
+df$credit.policy <- factor(df$credit.policy)
+str(df)
+df$purpose <- factor(df$purpose)
+#str(credit.policy)
+credit.policyLogit <- glm(credit.policy ~ . , data = df, binomial(link = "logit") )  
+```
+
+We can see the summary of the logit model here:
+
+```{r}
+summary(credit.policyLogit)
+```
+
+```{r results='markup'}
+xkabledply(credit.policyLogit, title = "Logistic Regression :")
+```
+
+Before moving on, let us look at the model object `credit.policyLogit` a little deeper. The fitted values can be found from `credit.policyLogit$fitted.values`. And the first fitted value is `r credit.policyLogit$fitted.values[1]`. This is the probability of being credit.policyted for data point #1. Compare to the value from `predict(credit.policyLogit)` to be `r predict(credit.policyLogit)[1]`. 
+
+The `predict()` function gives us the logit value. You can exponentiate to get the odds ratio p/q as `r exp(predict(credit.policyLogit)[1])`. And finally, we can find p from p/q, and indeed it is confirmed to be `r 1/(1+exp(-predict(credit.policyLogit)[1]))`.
+
+The easier way to get that is simply use `predict(credit.policyLogit, type = c("response"))[1]` = `r predict(credit.policyLogit, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
+
+```{r logit_fitted_value}
+p_fitted = credit.policyLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
+```
+
+This is stored in the model as the fitted value for the probability `p` of the first data point. Since the actual data point is a 0/1 True/False value, it is not easy to directly compare them unless we use a cutoff value (default as 0.5) to convert the probability `p` to 0/1.
+
+Now, for unseen data point, we can use the `predict( )` function to find the model predicted values. But be careful of what you are getting with the `predict()` function in classification models. Let us compare the three options below. For easy comparison, let us use the same data point in the dataset as an example.
+
+```{r}
+# This gives you the predicted values of the data points inside the model.
+predict(credit.policyLogit)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
+```
+
+
+### Confidence Intervals
+
+We can easily determine the confidence intervals of each coefficient with these two slightly different ways:
+
+```{r ConfInt, results='markup', collapse=F}
+## CIs using profiled log-likelihood
+# confint(credit.policyLogit)
+xkabledply( confint(credit.policyLogit), title = "CIs using profiled log-likelihood" )
+## CIs using standard errors
+# confint.default(credit.policyLogit)
+xkabledply( confint.default(credit.policyLogit), title = "CIs using standard errors" )
+```
+
+### Model evaluation
+
+#### Confusion matrix
+
+This is just one of the many libraries you can find the confusion matrix. It is easy to use, but not very powerful, lacking ability to choose cutoff value, and it does not give you all the metrics like accuracy, precision, recall, sensitivity, f1 score etc. Nonetheless, it's handy.
+
+```{r confusionMatrix, results='markup'}
+loadPkg("regclass")
+# confusion_matrix(credit.policyLogit)
+xkabledply( confusion_matrix(credit.policyLogit), title = "Confusion matrix from Logit Model" )
+unloadPkg("regclass")
+```
+
+
+#### Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC)
+
+Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures the true positive rate (or sensitivity) against the false positive rate (or specificity). The area-under-curve is always between 0.5 and 1. Values higher than 0.8 is considered good model fit.
+
+```{r roc_auc}
+loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+prob=predict(credit.policyLogit, type = "response" )
+df$prob <- NA
+df$prob=prob
+h <- roc(credit.policy~prob, data=df)
+auc(h) # area-under-curve prefer 0.8 or higher.
+plot(h)
+# unloadPkg("pROC")
+head(df)
+```
+
+We have here the area-under-curve of `r auc(h)`, which is more than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is considered a good fit.
+
+#### END ##
+
+
+
+
+
+#### McFadden
+
+McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
+
+```{r McFadden_direct}
+credit.policyNullLogit <- glm(credit.policy ~ 1, data = df, family = "binomial")
+mcFadden = 1 - logLik(credit.policyLogit)/logLik(credit.policyNullLogit)
+mcFadden
+```
+
+Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) will do the trick.
+
+```{r McFadden}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+credit.policyLogitpr2 = pR2(credit.policyLogit)
+credit.policyLogitpr2
+unloadPkg("pscl") 
+```
+
+With the McFadden value of `r credit.policyLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 51% of the variations in y is explained by the explanatory variables in the model.
+
+A major weakness of the overall model is likely from the small dataset sample size of `r length(df$credit.policy)`. We expect a much higher number of observations will increase the sensitivity of the model.
+
+#### Hosmer and Lemeshow test
+
+The Hosmer and Lemeshow Goodness of Fit test can be used to evaluate logistic regression fit.
+
+```{r HosmerLemeshow}
+loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+```
+
+```{r}
+credit.policyLogitHoslem = hoslem.test(df$credit.policy, fitted(credit.policyLogit)) # Hosmer and Lemeshow test, a chi-squared test
+```
+
+The result is shown here:
+
+```{r HosmerLemeshowRes, results='markup', collapse=F}
+credit.policyLogitHoslem
+# Have not found a good way to display it.
+```
+
+The p-value of `r credit.policyLogitHoslem$p.value` is relatively low. This indicates the model is y a good fit, despite all the coefficients are significant.
+
+
+
+
+# Logistic Regression Not Fully Paid
+
+
+## Effects on not.fully paid by purpose
+
+To study the effects on admission by the factor purpose (not.fully.paid and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
+\*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
+
+```{r crosstable}
+not.fully.paidpurposetable = xtabs(~ not.fully.paid + purpose, data = df)
+not.fully.paidpurposetable
+```
+## feature selection
+```{r}
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+# load the dataset
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# train the model
+class(df$not.fully.paid)
+model <- train(not.fully.paid~., data=df, method="glm", preProcess="scale", trControl=control)
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+#names(getModelInfo())
+```
+
+
+
+
+
+
+## Logistic Regression Model
+
+
+```{r logitmodel}
+df$not.fully.paid <- factor(df$not.fully.paid)
+str(df)
+df$purpose <- factor(df$purpose)
+#str(not.fully.paid)
+not.fully.paidLogit <- glm(not.fully.paid ~., data = df, binomial(link = "logit") )  
+```
+
+We can see the summary of the logit model here:
+
+```{r}
+summary(not.fully.paidLogit)
+```
+
+```{r results='markup'}
+xkabledply(not.fully.paidLogit, title = "Logistic Regression :")
+```
+
+Before moving on, let us look at the model object `not.fully.paidLogit` a little deeper. The fitted values can be found from `not.fully.paidLogit$fitted.values`. And the first fitted value is `r not.fully.paidLogit$fitted.values[1]`. This is the probability of being not.fully.paid for data point #1. Compare to the value from `predict(not.fully.paidLogit)` to be `r predict(not.fully.paidLogit)[1]`. 
+
+The `predict()` function gives us the logit value. You can exponentiate to get the odds ratio p/q as `r exp(predict(not.fully.paidLogit)[1])`. And finally, we can find p from p/q, and indeed it is confirmed to be `r 1/(1+exp(-predict(not.fully.paidLogit)[1]))`.
+
+The easier way to get that is simply use `predict(not.fully.paidLogit, type = c("response"))[1]` = `r predict(not.fully.paidLogit, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
+
+```{r logit_fitted_value}
+p_fitted = not.fully.paidLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
+p_fitted
+```
+
+This is stored in the model as the fitted value for the probability `p` of the first data point. Since the actual data point is a 0/1 True/False value, it is not easy to directly compare them unless we use a cutoff value (default as 0.5) to convert the probability `p` to 0/1.
+
+Now, for unseen data point, we can use the `predict( )` function to find the model predicted values. But be careful of what you are getting with the `predict()` function in classification models. Let us compare the three options below. For easy comparison, let us use the same data point in the dataset as an example.
+
+```{r}
+# This gives you the predicted values of the data points inside the model.
+predict(not.fully.paidLogit)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
+```
+
+
+### Confidence Intervals
+
+We can easily determin the confidence intervals of each coefficient with these two slightly different ways:
+
+```{r ConfInt, results='markup', collapse=F}
+## CIs using profiled log-likelihood
+# confint(not.fully.paidLogit)
+xkabledply( confint(not.fully.paidLogit), title = "CIs using profiled log-likelihood" )
+## CIs using standard errors
+# confint.default(not.fully.paidLogit)
+xkabledply( confint.default(not.fully.paidLogit), title = "CIs using standard errors" )
+```
+
+### Model evaluation
+
+#### Confusion matrix
+
+This is just one of the many libraries you can find the confusion matrix. It is easy to use, but not very powerful, lacking ability to choose cutoff value, and it does not give you all the metrics like accuracy, precision, recall, sensitivity, f1 score etc. Nonetheless, it's handy.
+
+```{r confusionMatrix, results='markup'}
+loadPkg("regclass")
+# confusion_matrix(not.fully.paidLogit)
+xkabledply( confusion_matrix(not.fully.paidLogit), title = "Confusion matrix from Logit Model" )
+unloadPkg("regclass")
+```
+
+
+#### Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC)
+
+Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures the true positive rate (or sensitivity) against the false positive rate (or specificity). The area-under-curve is always between 0.5 and 1. Values higher than 0.8 is considered good model fit.
+
+```{r roc_auc}
+loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+prob=predict(not.fully.paidLogit, type = "response" )
+df$prob <- NA
+df$prob=prob
+h <- roc(not.fully.paid~prob, data=df)
+auc(h) # area-under-curve prefer 0.8 or higher.
+plot(h)
+# unloadPkg("pROC")
+head(df)
+```
+
+We have here the area-under-curve of `r auc(h)`, which is less than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is not considered a good fit.
+
+#### END ##
+
+
+
+
+
+#### McFadden
+
+McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
+
+```{r McFadden_direct}
+not.fully.paidNullLogit <- glm(not.fully.paid ~ 1, data = df, family = "binomial")
+mcFadden = 1 - logLik(not.fully.paidLogit)/logLik(not.fully.paidNullLogit)
+mcFadden
+```
+
+Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) will do the trick.
+
+```{r McFadden}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+not.fully.paidLogitpr2 = pR2(not.fully.paidLogit)
+not.fully.paidLogitpr2
+unloadPkg("pscl") 
+```
+
+With the McFadden value of `r not.fully.paidLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 8% of the variations in y is explained by the explanatory variables in the model.
+
+A major weakness of the overall model is likely from the small dataset sample size of `r length(df$not.fully.paid)`. We expect a much higher number of observations will increase the sensitivity of the model.
+
+#### Hosmer and Lemeshow test
+
+The Hosmer and Lemeshow Goodness of Fit test can be used to evaluate logistic regression fit.
+
+```{r HosmerLemeshow}
+loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+```
+
+```{r}
+not.fully.paidLogitHoslem = hoslem.test(df$not.fully.paid, fitted(not.fully.paidLogit)) # Hosmer and Lemeshow test, a chi-squared test
+```
+
+The result is shown here:
+
+```{r HosmerLemeshowRes, results='markup', collapse=F}
+not.fully.paidLogitHoslem
+# Have not found a good way to display it.
+```
+
+The p-value of `r not.fully.paidLogitHoslem$p.value` is relatively high. This indicates the model is not really a good fit, despite all the coefficients are significant.
+
+
 
 
 
