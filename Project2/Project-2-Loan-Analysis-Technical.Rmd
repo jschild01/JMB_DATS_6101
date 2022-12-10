@@ -575,9 +575,6 @@ plot(importance)
 
 <<<<<<< Updated upstream
 ```{r}
-=======
-```{r }
->>>>>>> Stashed changes
 loans$credit.policy <- factor(loans$credit.policy)
 str(loans)
 loans$purpose <- factor(loans$purpose)
@@ -621,9 +618,6 @@ We can easily determine the confidence intervals of each coefficient with these 
 
 <<<<<<< Updated upstream
 ```{r results='markup', collapse=F}
-=======
-```{r , results='markup', collapse=F}
->>>>>>> Stashed changes
 ## CIs using profiled log-likelihood
 # confint(credit.policyLogit)
 xkabledply( confint(credit.policyLogit), title = "CIs using profiled log-likelihood" )
@@ -727,9 +721,6 @@ To study the effects on admission by the factor purpose (not.fully.paid and purp
 
 <<<<<<< Updated upstream
 ```{r}
-=======
-```{r table}
->>>>>>> Stashed changes
 not.fully.paidpurposetable = xtabs(~ not.fully.paid + purpose, data = loans)
 not.fully.paidpurposetable
 ```
@@ -789,9 +780,6 @@ The easier way to get that is simply use `predict(not.fully.paidLogit, type = c(
 
 <<<<<<< Updated upstream
 ```{r}
-=======
-```{r }
->>>>>>> Stashed changes
 p_fitted = not.fully.paidLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
 p_fitted
 ```
