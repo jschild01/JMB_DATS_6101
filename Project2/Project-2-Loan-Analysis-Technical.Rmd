@@ -472,7 +472,7 @@ plot(importance)
 
 
 ```{r}
-model <- lm(int.rate ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data = loans)
+model <- lm(int.rate ~ fico+installment+purpose+dti+inq.last.6mths+credit.policy+log.annual.inc, data = loans)
 summary(model)
 ```
 
@@ -580,7 +580,7 @@ loans$credit.policy <- factor(loans$credit.policy)
 str(loans)
 loans$purpose <- factor(loans$purpose)
 #str(credit.policy)
-credit.policyLogit <- glm(credit.policy ~ . , data = loans, binomial(link = "logit") )  
+credit.policyLogit <- glm(credit.policy ~ inq.last.6mths+fico+log.annual.inc+dti+delinq.2yrs+pub.rec+purpose , data = loans, binomial(link = "logit") )  
 ```
 
 We can see the summary of the logit model here:
