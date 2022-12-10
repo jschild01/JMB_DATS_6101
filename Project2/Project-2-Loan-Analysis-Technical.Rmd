@@ -133,6 +133,59 @@ From this we can conclude that converting `delinq.2yrs` and `pub.rec` to logical
 
 Lastly, we see that taking the natural log of `revol.bal` might be useful, as `log.revol.bal` has some stronger correlations than `revol.bal`. We will note this as we proceed with our modeling. 
 
+## Updated Visuals
+
+These are updated histograms, boxplots, and Q-Q plots with the log.revol.bal added variable. We will use these to briefly review the EDA we did for the first project.
+
+
+### Histograms
+```{r fig.width=8, echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a histogram
+# for each variable using the facet_wrap() function in ggplot2.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = "steelblue", color = "black") +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
+  theme_minimal()
+```
+
+### Boxplots
+```{r fig.width=8, echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
+# for each variable using the facet_wrap() function in ggplot2.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_boxplot(fill = "steelblue", color = "black",
+               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Boxplots of Numeric Variables", x = "Value") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+```
+
+### Q-Q Plots
+```{r echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a Q-Q plot
+# for each variable using the facet_wrap() function in ggplot2.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(sample = value)) +
+  geom_qq(color = "steelblue") +
+  geom_qq_line() +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
+  theme_minimal()
+```
+
 
 
 # Classification Tree
@@ -268,7 +321,7 @@ cm_stats %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-For certain statistics this model performs extremely well, with  near 100% specificity, precision, and positive predictive value. Negative predictive value is also very high at around 94%. 
+For certain statistics this model performs extremely well, with  near 100% specificity, precision, and positive predictive value. Negative predictive value is also very high at around 94%.
 
 To add: further comments on the statistics of the model.
 
@@ -390,6 +443,91 @@ loans %>%
   scale_y_continuous(labels = label_percent(scale = 1)) +
   theme_minimal()
 ```
+
+
+# Multiple Linear Regression
+
+
+```{r}
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+# load the dataset
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# train the model
+class(loans$not.fully.paid)
+model <- train(int.rate~., data=loans, method="lm", preProcess="scale", trControl=control)
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+#names(getModelInfo())
+```
+```{r}
+model <- lm(int.rate ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data = loans)
+summary(model)
+```
+
+```{r}
+model$coefficients
+model$call
+```
+
+```{r results='markup'}
+coef(model)
+confint(model)
+```
+
+```{r}
+library("broom")
+
+tidyfinal <-  tidy(model)
+tidyfinal
+
+Model_Summary <- augment(model)
+str(Model_Summary)
+head(Model_Summary)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(fit1)
+```
+```{r}
+vif(model)
+```
+
+```{r}
+lmtest::bptest(model)
+```
+
+```{r}
+car::ncvTest(model)
+```
+```{r}
+distBCMod <- caret::BoxCoxTrans(loans$int.rate)
+print(distBCMod)
+
+```
+
+```{r}
+loans_multiple_regression <- cbind(loans, dist_new=predict(distBCMod, loans$int.rate)) 
+head(loans_multiple_regression) 
+```
+```{r}
+mod1 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans_multiple_regression)
+summary(mod1)
+lmtest::bptest(mod1)
+```
+
+```{r}
+plot(mod1)
+```
+
 
 
 
