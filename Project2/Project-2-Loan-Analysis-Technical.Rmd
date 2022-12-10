@@ -37,6 +37,8 @@ library(kableExtra)
 library(rpart) # For the classification tree model
 library(caret) # For the classification tree model
 set.seed(1) # For the classification tree model
+library(rpart.plot) # For plotting nice looking classification trees
+library(pROC) # For ROC/AUC
 
 # Read in the data from the working directory
 loans <- read_csv("loan_data.csv")
@@ -66,7 +68,7 @@ From our EDA in project 1 we know that the `credit.policy` and `not.fully.paid` 
 
 ```{r}
 # We determined this makes sense to do from our EDA
-str(loans)
+str(loans) # keep??
 loans$credit.policy <- as.logical(loans$credit.policy)
 loans$not.fully.paid <- as.logical(loans$not.fully.paid)
 
@@ -301,7 +303,8 @@ Building the classification tree, we can see that `int.rate` was not used in the
 
 ```{r results="show", fig.dim=c(6,4)}
 # Since we are renaming some values let's make a separate dataset for this model
-loans_tree <- loans
+# loans_tree <- loans
+loans_tree <- loans_with_outliers
 
 # First convert the credit.policy variable from a logical to a factor, then rename the levels
 loans_tree$credit.policy <- as.factor(loans_tree$credit.policy) %>%
@@ -330,27 +333,26 @@ We can better visualize the tree by plotting it out. We can see the `inq.last.6m
 
 ```{r}
 # plot the tree and add text
-library(rpart.plot)
 rpart.plot(creditfit, uniform=TRUE, main="Classification Tree for Credit.Policy", digits = 3, extra = 1)
 #plot(creditfit, uniform=TRUE, main="Classification Tree for credit.policy")
 #text(creditfit, use.n=TRUE, all=TRUE, cex=.75)
 
 ```
-Of all of the loans, 753 had more greater than or equal to four `inq.last.6mths`. Of those 753:
+Of all of the loans, 1231 had more greater than or equal to four `inq.last.6mths`. Of those 1231:
 
-* 622 had a `FICO` lower than 740 and failed to meet the `credit.policy`
-* 11 had a `FICO` score 740 or higher and failed to meet the `credit.policy`
-* 120 had a `FICO` score 740 or higher and met the `credit.policy`
+* 1047 had a `FICO` lower than 740 and failed to meet the `credit.policy`
+* 21 had a `FICO` score 740 or higher and failed to meet the `credit.policy`
+* 163 had a `FICO` score 740 or higher and met the `credit.policy`
 
 This indicates that applicants will likely need a `FICO` score of 740 or higher if they have greater than or equal to four `inq.last.6mths` in order to anticipate meeting the `credit.policy`.
 
 
-Conversely, of all of the loans, 8825 had less than four `inq.last.6mths`. Of those 8825:
+Conversely, of all of the loans, 8347 had less than four `inq.last.6mths`. Of those 8347:
 
-* 434 had a `FICO` lower than 660 and failed to meet the `credit.policy`
+* 352 had a `FICO` lower than 660 and failed to meet the `credit.policy`
 * 2 had a `FICO` lower than 660 but still managed to meet the `credit.policy`
-* 801 had a `FICO` score 660 or higher and failed to meet the `credit.policy`
-* 7588 had a `FICO` score 660 or higher and met the `credit.policy`
+* 448 had a `FICO` score 660 or higher and failed to meet the `credit.policy`
+* 7545 had a `FICO` score 660 or higher and met the `credit.policy`
 
 This indicates that applicants will likely need a `FICO` score of only 660 or higher if they have less than four `inq.last.6mths` in order to anticipate meeting the `credit.policy`.
 
@@ -359,9 +361,9 @@ Overall, we can see that less `inq.last.6mths` aligns with lower `FICO` score re
 
 ```{r}
 # create a postscript plot of tree 
+# The rpart.plot() function looks quite nice, so we may not need this
 post(creditfit, file = "credittree2.ps", title = "Classification Tree for credit.policy")
 ```
-To add: can we include the image created?
 
 
 ## Confusion Matrix
@@ -376,7 +378,7 @@ print('Class: ')
 confusion_matrix$byClass
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
 ```
-Based on the Kappa statistic of `r round(confusion_matrix$overall["Kappa"], digits=2)` we would evaluate this classifier as substantial.
+Based on the Kappa statistic of `r round(confusion_matrix$overall["Kappa"], digits=2)` we would evaluate this classifier as almost perfect agreement.
 
 To add: other comments on the overall stats of the model.
 
@@ -404,7 +406,7 @@ cm_table %>%
   kable() %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 
-## Can we highlight the values in the first column ("Actual") using kable??
+## Can we bold the values in the first column ("Actual") using kable??
 ```
 
 ```{r results="show"}
@@ -424,7 +426,7 @@ cm_stats %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-For certain statistics this model performs extremely well, with  near 100% specificity, precision, and positive prediction value. Negative prediction value is also very high at around 90%. 
+For certain statistics this model performs extremely well, with  near 100% specificity, precision, and positive predictive value. Negative predictive value is also very high at around 94%. 
 
 To add: further comments on the statistics of the model.
 
@@ -432,11 +434,22 @@ To add: further comments on the statistics of the model.
 
 ## ROC Curve
 
-Add this??
+Can we do this for this type of model?
+
+```{r}
+library(pROC)
+
+loans_tree$prediction <- predict(creditfit, type = "vector")
+# loans_tree$prediction <- predict(creditfit, type = "prob")[,2]
+tree_roc <- roc(credit.policy ~ prediction, data=loans_tree)
+auc(tree_roc) # area-under-curve prefer 0.8 or higher.
+plot(tree_roc)
 
 
+```
 
 
+The AUC of the ROC is `r auc(tree_roc)`, which is greater than the 0.8 threshold, so we would consider this to be a good indicator/model.
 
 
 
