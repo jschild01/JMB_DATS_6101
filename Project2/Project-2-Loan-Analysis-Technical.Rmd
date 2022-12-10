@@ -449,8 +449,6 @@ loans %>%
 
 # Multiple Linear Regression
 
-library(car)
-```
 
 ```{r}
 set.seed(7)
@@ -471,6 +469,8 @@ print(importance)
 plot(importance)
 #names(getModelInfo())
 ```
+
+
 ```{r}
 model <- lm(int.rate ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data = loans)
 summary(model)
@@ -528,6 +528,7 @@ lmtest::bptest(mod1)
 ```
 
 ```{r}
+par(mfrow=c(2,2))
 plot(mod1)
 ```
 
