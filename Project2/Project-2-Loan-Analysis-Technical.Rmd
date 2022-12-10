@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_depth: 3
     toc_float: yes
-  pdf_document:
+  ploans_document:
     toc: yes=
     toc_depth: '3'
   word_document:
@@ -132,59 +132,6 @@ Some notable observations of this:
 From this we can conclude that converting `delinq.2yrs` and `pub.rec` to logicals did not add any advantage for our dataset. We can also conclude that the `has.revol.bal` variable is not necessary and will not add value to our analysis beyond what `log.revol.bal` already covers. Successfully eliminating these as possibilities increases our confidence in the use of their original structures.
 
 Lastly, we see that taking the natural log of `revol.bal` might be useful, as `log.revol.bal` has some stronger correlations than `revol.bal`. We will note this as we proceed with our modeling. 
-
-## Updated Visuals
-
-These are updated histograms, boxplots, and Q-Q plots with the log.revol.bal added variable. We will use these to briefly review the EDA we did for the first project.
-
-
-### Histograms
-```{r fig.width=8, echo=FALSE}
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a histogram
-# for each variable using the facet_wrap() function in ggplot2.
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
-  geom_histogram(fill = "steelblue", color = "black") +
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
-  theme_minimal()
-```
-
-### Boxplots
-```{r fig.width=8, echo=FALSE}
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
-# for each variable using the facet_wrap() function in ggplot2.
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(x = value)) +
-  geom_boxplot(fill = "steelblue", color = "black",
-               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Boxplots of Numeric Variables", x = "Value") +
-  theme_minimal() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
-```
-
-### Q-Q Plots
-```{r echo=FALSE}
-# By gathering the variables we want to see into a long format with the gather() function, we can then create a Q-Q plot
-# for each variable using the facet_wrap() function in ggplot2.
-loans %>%
-  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
-           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
-  gather(variable, value) %>%
-  ggplot(aes(sample = value)) +
-  geom_qq(color = "steelblue") +
-  geom_qq_line() +
-  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
-  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
-  theme_minimal()
-```
 
 
 
@@ -321,7 +268,7 @@ cm_stats %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-For certain statistics this model performs extremely well, with  near 100% specificity, precision, and positive predictive value. Negative predictive value is also very high at around 94%.
+For certain statistics this model performs extremely well, with  near 100% specificity, precision, and positive predictive value. Negative predictive value is also very high at around 94%. 
 
 To add: further comments on the statistics of the model.
 
@@ -445,91 +392,6 @@ loans %>%
 ```
 
 
-# Multiple Linear Regression
-
-
-```{r}
-set.seed(7)
-# load the library
-library(mlbench)
-library(caret)
-# load the dataset
-# prepare training scheme
-control <- trainControl(method="repeatedcv", number=10, repeats=3)
-# train the model
-class(loans$not.fully.paid)
-model <- train(int.rate~., data=loans, method="lm", preProcess="scale", trControl=control)
-# estimate variable importance
-importance <- varImp(model, scale=FALSE)
-# summarize importance
-print(importance)
-# plot importance
-plot(importance)
-#names(getModelInfo())
-```
-```{r}
-model <- lm(int.rate ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data = loans)
-summary(model)
-```
-
-```{r}
-model$coefficients
-model$call
-```
-
-```{r results='markup'}
-coef(model)
-confint(model)
-```
-
-```{r}
-library("broom")
-
-tidyfinal <-  tidy(model)
-tidyfinal
-
-Model_Summary <- augment(model)
-str(Model_Summary)
-head(Model_Summary)
-```
-
-```{r}
-par(mfrow=c(2,2))
-plot(fit1)
-```
-```{r}
-vif(model)
-```
-
-```{r}
-lmtest::bptest(model)
-```
-
-```{r}
-car::ncvTest(model)
-```
-```{r}
-distBCMod <- caret::BoxCoxTrans(loans$int.rate)
-print(distBCMod)
-
-```
-
-```{r}
-loans_multiple_regression <- cbind(loans, dist_new=predict(distBCMod, loans$int.rate)) 
-head(loans_multiple_regression) 
-```
-```{r}
-mod1 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans_multiple_regression)
-summary(mod1)
-lmtest::bptest(mod1)
-```
-
-```{r}
-plot(mod1)
-```
-
-
-
 
 # Logistic Regression Credit Policy
 
@@ -539,7 +401,7 @@ To study the effects on admission by the factor purpose (credit.policy and purpo
 \*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
 
 ```{r crosstable}
-credit.policypurposetable = xtabs(~ credit.policy + purpose, data = df)
+credit.policypurposetable = xtabs(~ credit.policy + purpose, data = loans)
 credit.policypurposetable
 ```
 
@@ -551,10 +413,11 @@ library(mlbench)
 library(caret)
 # load the dataset
 # prepare training scheme
+loans$credit.policy = as.factor(loans$credit.policy)
 control <- trainControl(method="repeatedcv", number=10, repeats=3)
 # train the model
-class(df$credit.policy)
-model <- train(credit.policy~., data=df, method="glm", preProcess="scale", trControl=control)
+class(loans$credit.policy)
+model <- train(credit.policy~., data=loans, method="glm", preProcess="scale", trControl=control)
 # estimate variable importance
 importance <- varImp(model, scale=FALSE)
 # summarize importance
@@ -571,11 +434,11 @@ plot(importance)
 
 
 ```{r logitmodel}
-df$credit.policy <- factor(df$credit.policy)
-str(df)
-df$purpose <- factor(df$purpose)
+loans$credit.policy <- factor(loans$credit.policy)
+str(loans)
+loans$purpose <- factor(loans$purpose)
 #str(credit.policy)
-credit.policyLogit <- glm(credit.policy ~ . , data = df, binomial(link = "logit") )  
+credit.policyLogit <- glm(credit.policy ~ . , data = loans, binomial(link = "logit") )  
 ```
 
 We can see the summary of the logit model here:
@@ -642,13 +505,13 @@ Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures
 ```{r roc_auc}
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
 prob=predict(credit.policyLogit, type = "response" )
-df$prob <- NA
-df$prob=prob
-h <- roc(credit.policy~prob, data=df)
+loans$prob <- NA
+loans$prob=prob
+h <- roc(credit.policy~prob, data=loans)
 auc(h) # area-under-curve prefer 0.8 or higher.
 plot(h)
 # unloadPkg("pROC")
-head(df)
+head(loans)
 ```
 
 We have here the area-under-curve of `r auc(h)`, which is more than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is considered a good fit.
@@ -664,7 +527,7 @@ We have here the area-under-curve of `r auc(h)`, which is more than 0.8. This te
 McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
 
 ```{r McFadden_direct}
-credit.policyNullLogit <- glm(credit.policy ~ 1, data = df, family = "binomial")
+credit.policyNullLogit <- glm(credit.policy ~ 1, data = loans, family = "binomial")
 mcFadden = 1 - logLik(credit.policyLogit)/logLik(credit.policyNullLogit)
 mcFadden
 ```
@@ -680,7 +543,7 @@ unloadPkg("pscl")
 
 With the McFadden value of `r credit.policyLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 51% of the variations in y is explained by the explanatory variables in the model.
 
-A major weakness of the overall model is likely from the small dataset sample size of `r length(df$credit.policy)`. We expect a much higher number of observations will increase the sensitivity of the model.
+A major weakness of the overall model is likely from the small dataset sample size of `r length(loans$credit.policy)`. We expect a much higher number of observations will increase the sensitivity of the model.
 
 #### Hosmer and Lemeshow test
 
@@ -691,7 +554,7 @@ loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluatio
 ```
 
 ```{r}
-credit.policyLogitHoslem = hoslem.test(df$credit.policy, fitted(credit.policyLogit)) # Hosmer and Lemeshow test, a chi-squared test
+credit.policyLogitHoslem = hoslem.test(loans$credit.policy, fitted(credit.policyLogit)) # Hosmer and Lemeshow test, a chi-squared test
 ```
 
 The result is shown here:
@@ -715,7 +578,7 @@ To study the effects on admission by the factor purpose (not.fully.paid and purp
 \*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
 
 ```{r crosstable}
-not.fully.paidpurposetable = xtabs(~ not.fully.paid + purpose, data = df)
+not.fully.paidpurposetable = xtabs(~ not.fully.paid + purpose, data = loans)
 not.fully.paidpurposetable
 ```
 ## feature selection
@@ -724,12 +587,13 @@ set.seed(7)
 # load the library
 library(mlbench)
 library(caret)
+loans$not.fully.paid = as.factor(loans$not.fully.paid)
 # load the dataset
 # prepare training scheme
 control <- trainControl(method="repeatedcv", number=10, repeats=3)
 # train the model
-class(df$not.fully.paid)
-model <- train(not.fully.paid~., data=df, method="glm", preProcess="scale", trControl=control)
+class(loans$not.fully.paid)
+model <- train(not.fully.paid~., data=loans, method="glm", preProcess="scale", trControl=control)
 # estimate variable importance
 importance <- varImp(model, scale=FALSE)
 # summarize importance
@@ -748,11 +612,11 @@ plot(importance)
 
 
 ```{r logitmodel}
-df$not.fully.paid <- factor(df$not.fully.paid)
-str(df)
-df$purpose <- factor(df$purpose)
+loans$not.fully.paid <- factor(loans$not.fully.paid)
+str(loans)
+loans$purpose <- factor(loans$purpose)
 #str(not.fully.paid)
-not.fully.paidLogit <- glm(not.fully.paid ~., data = df, binomial(link = "logit") )  
+not.fully.paidLogit <- glm(not.fully.paid ~., data = loans, binomial(link = "logit") )  
 ```
 
 We can see the summary of the logit model here:
@@ -820,13 +684,13 @@ Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures
 ```{r roc_auc}
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
 prob=predict(not.fully.paidLogit, type = "response" )
-df$prob <- NA
-df$prob=prob
-h <- roc(not.fully.paid~prob, data=df)
+loans$prob <- NA
+loans$prob=prob
+h <- roc(not.fully.paid~prob, data=loans)
 auc(h) # area-under-curve prefer 0.8 or higher.
 plot(h)
 # unloadPkg("pROC")
-head(df)
+head(loans)
 ```
 
 We have here the area-under-curve of `r auc(h)`, which is less than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is not considered a good fit.
@@ -842,7 +706,7 @@ We have here the area-under-curve of `r auc(h)`, which is less than 0.8. This te
 McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
 
 ```{r McFadden_direct}
-not.fully.paidNullLogit <- glm(not.fully.paid ~ 1, data = df, family = "binomial")
+not.fully.paidNullLogit <- glm(not.fully.paid ~ 1, data = loans, family = "binomial")
 mcFadden = 1 - logLik(not.fully.paidLogit)/logLik(not.fully.paidNullLogit)
 mcFadden
 ```
@@ -858,7 +722,7 @@ unloadPkg("pscl")
 
 With the McFadden value of `r not.fully.paidLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 8% of the variations in y is explained by the explanatory variables in the model.
 
-A major weakness of the overall model is likely from the small dataset sample size of `r length(df$not.fully.paid)`. We expect a much higher number of observations will increase the sensitivity of the model.
+A major weakness of the overall model is likely from the small dataset sample size of `r length(loans$not.fully.paid)`. We expect a much higher number of observations will increase the sensitivity of the model.
 
 #### Hosmer and Lemeshow test
 
@@ -869,7 +733,7 @@ loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluatio
 ```
 
 ```{r}
-not.fully.paidLogitHoslem = hoslem.test(df$not.fully.paid, fitted(not.fully.paidLogit)) # Hosmer and Lemeshow test, a chi-squared test
+not.fully.paidLogitHoslem = hoslem.test(loans$not.fully.paid, fitted(not.fully.paidLogit)) # Hosmer and Lemeshow test, a chi-squared test
 ```
 
 The result is shown here:
