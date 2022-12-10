@@ -134,6 +134,60 @@ From this we can conclude that converting `delinq.2yrs` and `pub.rec` to logical
 Lastly, we see that taking the natural log of `revol.bal` might be useful, as `log.revol.bal` has some stronger correlations than `revol.bal`. We will note this as we proceed with our modeling. 
 
 
+## Updated Visuals
+
+These are updated histograms, boxplots, and Q-Q plots with the log.revol.bal added variable. We will use these to briefly review the EDA we did for the first project.
+
+
+### Histograms
+```{r fig.width=8, echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a histogram
+# for each variable using the facet_wrap() function in ggplot2.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(fill = "steelblue", color = "black") +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Histograms of Numeric Variables", x = "Value", y = "Count") +
+  theme_minimal()
+```
+
+### Boxplots
+```{r fig.width=8, echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a boxplot
+# for each variable using the facet_wrap() function in ggplot2.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(x = value)) +
+  geom_boxplot(fill = "steelblue", color = "black",
+               outlier.size = 2, outlier.alpha = 0.2) + # Translucent and larger outliers to help with overplotting
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Boxplots of Numeric Variables", x = "Value") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+```
+
+### Q-Q Plots
+```{r echo=FALSE}
+# By gathering the variables we want to see into a long format with the gather() function, we can then create a Q-Q plot
+# for each variable using the facet_wrap() function in ggplot2.
+loans %>%
+  select(int.rate, installment, log.annual.inc, dti, fico, days.with.cr.line, revol.bal, revol.util,
+           inq.last.6mths, delinq.2yrs, pub.rec, log.revol.bal) %>%
+  gather(variable, value) %>%
+  ggplot(aes(sample = value)) +
+  geom_qq(color = "steelblue") +
+  geom_qq_line() +
+  facet_wrap(~ variable, scales = "free") + # Free scales so the graphs are readable
+  labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
+  theme_minimal()
+```
+
+
 
 # Classification Tree
 
@@ -400,7 +454,7 @@ loans %>%
 To study the effects on admission by the factor purpose (credit.policy and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
 \*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
 
-```{r crosstable}
+```{r}
 credit.policypurposetable = xtabs(~ credit.policy + purpose, data = loans)
 credit.policypurposetable
 ```
@@ -433,7 +487,7 @@ plot(importance)
 ## Logistic Regression Model
 
 
-```{r logitmodel}
+```{r}
 loans$credit.policy <- factor(loans$credit.policy)
 str(loans)
 loans$purpose <- factor(loans$purpose)
@@ -457,7 +511,7 @@ The `predict()` function gives us the logit value. You can exponentiate to get t
 
 The easier way to get that is simply use `predict(credit.policyLogit, type = c("response"))[1]` = `r predict(credit.policyLogit, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
 
-```{r logit_fitted_value}
+```{r}
 p_fitted = credit.policyLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
 ```
 
@@ -475,7 +529,7 @@ predict(credit.policyLogit)  # the is from the model, which gives you the value 
 
 We can easily determine the confidence intervals of each coefficient with these two slightly different ways:
 
-```{r ConfInt, results='markup', collapse=F}
+```{r results='markup', collapse=F}
 ## CIs using profiled log-likelihood
 # confint(credit.policyLogit)
 xkabledply( confint(credit.policyLogit), title = "CIs using profiled log-likelihood" )
@@ -490,7 +544,7 @@ xkabledply( confint.default(credit.policyLogit), title = "CIs using standard err
 
 This is just one of the many libraries you can find the confusion matrix. It is easy to use, but not very powerful, lacking ability to choose cutoff value, and it does not give you all the metrics like accuracy, precision, recall, sensitivity, f1 score etc. Nonetheless, it's handy.
 
-```{r confusionMatrix, results='markup'}
+```{r results='markup'}
 loadPkg("regclass")
 # confusion_matrix(credit.policyLogit)
 xkabledply( confusion_matrix(credit.policyLogit), title = "Confusion matrix from Logit Model" )
@@ -502,7 +556,7 @@ unloadPkg("regclass")
 
 Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures the true positive rate (or sensitivity) against the false positive rate (or specificity). The area-under-curve is always between 0.5 and 1. Values higher than 0.8 is considered good model fit.
 
-```{r roc_auc}
+```{r}
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
 prob=predict(credit.policyLogit, type = "response" )
 loans$prob <- NA
@@ -526,7 +580,7 @@ We have here the area-under-curve of `r auc(h)`, which is more than 0.8. This te
 
 McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
 
-```{r McFadden_direct}
+```{r}
 credit.policyNullLogit <- glm(credit.policy ~ 1, data = loans, family = "binomial")
 mcFadden = 1 - logLik(credit.policyLogit)/logLik(credit.policyNullLogit)
 mcFadden
@@ -534,7 +588,7 @@ mcFadden
 
 Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) will do the trick.
 
-```{r McFadden}
+```{r}
 loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
 credit.policyLogitpr2 = pR2(credit.policyLogit)
 credit.policyLogitpr2
@@ -549,7 +603,7 @@ A major weakness of the overall model is likely from the small dataset sample si
 
 The Hosmer and Lemeshow Goodness of Fit test can be used to evaluate logistic regression fit.
 
-```{r HosmerLemeshow}
+```{r}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ```
 
@@ -559,7 +613,7 @@ credit.policyLogitHoslem = hoslem.test(loans$credit.policy, fitted(credit.policy
 
 The result is shown here:
 
-```{r HosmerLemeshowRes, results='markup', collapse=F}
+```{r results='markup', collapse=F}
 credit.policyLogitHoslem
 # Have not found a good way to display it.
 ```
@@ -577,7 +631,7 @@ The p-value of `r credit.policyLogitHoslem$p.value` is relatively low. This indi
 To study the effects on admission by the factor purpose (not.fully.paid and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
 \*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
 
-```{r crosstable}
+```{r}
 not.fully.paidpurposetable = xtabs(~ not.fully.paid + purpose, data = loans)
 not.fully.paidpurposetable
 ```
@@ -611,7 +665,7 @@ plot(importance)
 ## Logistic Regression Model
 
 
-```{r logitmodel}
+```{r}
 loans$not.fully.paid <- factor(loans$not.fully.paid)
 str(loans)
 loans$purpose <- factor(loans$purpose)
@@ -635,7 +689,7 @@ The `predict()` function gives us the logit value. You can exponentiate to get t
 
 The easier way to get that is simply use `predict(not.fully.paidLogit, type = c("response"))[1]` = `r predict(not.fully.paidLogit, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
 
-```{r logit_fitted_value}
+```{r}
 p_fitted = not.fully.paidLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
 p_fitted
 ```
