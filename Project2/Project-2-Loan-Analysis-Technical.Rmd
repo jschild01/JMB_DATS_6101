@@ -573,7 +573,11 @@ plot(importance)
 ## Logistic Regression Model
 
 
+<<<<<<< Updated upstream
 ```{r}
+=======
+```{r }
+>>>>>>> Stashed changes
 loans$credit.policy <- factor(loans$credit.policy)
 str(loans)
 loans$purpose <- factor(loans$purpose)
@@ -615,7 +619,11 @@ predict(credit.policyLogit)  # the is from the model, which gives you the value 
 
 We can easily determine the confidence intervals of each coefficient with these two slightly different ways:
 
+<<<<<<< Updated upstream
 ```{r results='markup', collapse=F}
+=======
+```{r , results='markup', collapse=F}
+>>>>>>> Stashed changes
 ## CIs using profiled log-likelihood
 # confint(credit.policyLogit)
 xkabledply( confint(credit.policyLogit), title = "CIs using profiled log-likelihood" )
@@ -717,7 +725,11 @@ The p-value of `r credit.policyLogitHoslem$p.value` is relatively low. This indi
 To study the effects on admission by the factor purpose (not.fully.paid and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
 \*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
 
+<<<<<<< Updated upstream
 ```{r}
+=======
+```{r table}
+>>>>>>> Stashed changes
 not.fully.paidpurposetable = xtabs(~ not.fully.paid + purpose, data = loans)
 not.fully.paidpurposetable
 ```
@@ -775,7 +787,11 @@ The `predict()` function gives us the logit value. You can exponentiate to get t
 
 The easier way to get that is simply use `predict(not.fully.paidLogit, type = c("response"))[1]` = `r predict(not.fully.paidLogit, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
 
+<<<<<<< Updated upstream
 ```{r}
+=======
+```{r }
+>>>>>>> Stashed changes
 p_fitted = not.fully.paidLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
 p_fitted
 ```
@@ -809,7 +825,7 @@ xkabledply( confint.default(not.fully.paidLogit), title = "CIs using standard er
 
 This is just one of the many libraries you can find the confusion matrix. It is easy to use, but not very powerful, lacking ability to choose cutoff value, and it does not give you all the metrics like accuracy, precision, recall, sensitivity, f1 score etc. Nonetheless, it's handy.
 
-```{r confusionMatrix, results='markup'}
+```{r x, results='markup'}
 loadPkg("regclass")
 # confusion_matrix(not.fully.paidLogit)
 xkabledply( confusion_matrix(not.fully.paidLogit), title = "Confusion matrix from Logit Model" )
