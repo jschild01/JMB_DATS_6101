@@ -36,6 +36,7 @@ head(df)
 summary(df)
 str(df)
 sum(is.na(df))
+df$credit.policy=as.numeric(df$credit.policy)
 ```
 
 Let us first use the dataset that we are familiar with -- admissions dataset. We have looked at it many different times, using different techniques and methods. We will first re-visit those methods as practices, then try our new logistic regression model. Other than logistic regression, there are yet many more we can learn to analyse the same piece of information. We can use use Tree/Forest methods, KNN, SVM, etc. They all have their strength and weaknesses. First, let us load up the dataframe and take a quick look at the `head()` and `summary()`. Current settings do not show these output in html.
@@ -66,16 +67,39 @@ credit.policypurposetable = xtabs(~ credit.policy + purpose, data = df)
 credit.policypurposetable
 ```
 
+## feature selection
+```{r}
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+# load the dataset
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# train the model
+class(df$credit.policy)
+model <- train(credit.policy~., data=df, method="glm", preProcess="scale", trControl=control)
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+#names(getModelInfo())
+```
+
+
+
+
 ## Logistic Regression Model
 
-Let us now turn our attention to logistic regression models. Knowing that there is very like an effect on admission by purposes, we run the full model including purpose as well as GRE and GPA.
 
 ```{r logitmodel}
 df$credit.policy <- factor(df$credit.policy)
 str(df)
 df$purpose <- factor(df$purpose)
 #str(credit.policy)
-credit.policyLogit <- glm(credit.policy ~purpose+log.annual.inc+revol.bal+fico+revol.util+pub.rec+inq.last.6mths , data = df, binomial(link = "logit") )  
+credit.policyLogit <- glm(credit.policy ~ . , data = df, binomial(link = "logit") )  
 ```
 
 We can see the summary of the logit model here:
@@ -87,9 +111,6 @@ summary(credit.policyLogit)
 ```{r results='markup'}
 xkabledply(credit.policyLogit, title = "Logistic Regression :")
 ```
-
-All the coefficients are found significant (small p-values). GRE and GPA have positive effects on admission chance (credit.policy = 1), while "higher" purpose (purpose = 4 is highest) negatively affect the admission's likelihood. These are reasonable results and confirms our common beliefs.
-
 
 Before moving on, let us look at the model object `credit.policyLogit` a little deeper. The fitted values can be found from `credit.policyLogit$fitted.values`. And the first fitted value is `r credit.policyLogit$fitted.values[1]`. This is the probability of being credit.policyted for data point #1. Compare to the value from `predict(credit.policyLogit)` to be `r predict(credit.policyLogit)[1]`. 
 
@@ -110,24 +131,10 @@ Now, for unseen data point, we can use the `predict( )` function to find the mod
 predict(credit.policyLogit)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
 ```
 
-**The three options for the `predict()` function in Logit regression:**
-
--   The "response" option `predict(model, newdata=..., type="response") -> pred_response` nicely gives you the probability *p* directly as `r pred_response`.\
--   The "link" option `predict(model, newdata=..., type="link") -> pred_link` which is the default option, gives you the value of the link function. Remember the link function is\
-    `logit(p) = log(p/q) = log(p/1-p)`. The value here is `r pred_link`.\
--   The third option of "term", `predict(model, newdata=..., type="term") -> pred_term`, gives you the individual term contributions. Notice that the constant is also in this "term" object, but it is difficult to use. The three terms (slopes) are like values in a vector here: `pred_term` = [`r pred_term`], while the "intercept term $b_0$" is stored as an attribute `attr(pred_term,"constant")`: `r attr(pred_term,"constant")`.\
-    Note that the sum of all these four values equal to the value of the link function above: `r pred_term[1]` + `r pred_term[2]` + `r pred_term[3]` + `r attr(pred_term,"constant")` = `r sum(pred_term) + attr(pred_term,"constant")`.
-
-
-A quick summary, these different ways of calculating the same thing, which is the predicted probability values from the model.
-
--   Use the built-in type option `predict(credit.policyLogit, newdata=newdata1, type="response")` to get the *p* value: `r pred_response`
--   Use the link function value `predict(credit.policyLogit, newdata = newdata1, type = "link")` (or without the type argument, since this is the default), to calculate the value *p* `from 1/(1+exp( -linkFunctionValue ))`: `r`1/(1+exp(-pred_link)\`\
--   First find the odds-ratio from exponential of the link-value-function: `r oddsratio`, then calculate the predicted *p* value from `oddsratio / (oddsratio + 1)` = `r oddsratio / (oddsratio + 1)`
 
 ### Confidence Intervals
 
-We can easily determin the confidence intervals of each coefficient with these two slightly different ways:
+We can easily determine the confidence intervals of each coefficient with these two slightly different ways:
 
 ```{r ConfInt, results='markup', collapse=F}
 ## CIs using profiled log-likelihood
@@ -168,7 +175,7 @@ plot(h)
 head(df)
 ```
 
-We have here the area-under-curve of `r auc(h)`, which is less than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is not considered a good fit.
+We have here the area-under-curve of `r auc(h)`, which is more than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is considered a good fit.
 
 #### END ##
 
@@ -195,9 +202,9 @@ credit.policyLogitpr2
 unloadPkg("pscl") 
 ```
 
-With the McFadden value of `r credit.policyLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 8% of the variations in y is explained by the explanatory variables in the model.
+With the McFadden value of `r credit.policyLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 51% of the variations in y is explained by the explanatory variables in the model.
 
-A major weakness of the overall model is likely from the small dataset sample size of `r length(credit.policy$credit.policy)`. We expect a much higher number of observations will increase the sensitivity of the model.
+A major weakness of the overall model is likely from the small dataset sample size of `r length(df$credit.policy)`. We expect a much higher number of observations will increase the sensitivity of the model.
 
 #### Hosmer and Lemeshow test
 
@@ -218,5 +225,5 @@ credit.policyLogitHoslem
 # Have not found a good way to display it.
 ```
 
-The p-value of `r credit.policyLogitHoslem$p.value` is relatively high. This indicates the model is not really a good fit, despite all the coefficients are significant.
+The p-value of `r credit.policyLogitHoslem$p.value` is relatively low. This indicates the model is y a good fit, despite all the coefficients are significant.
 

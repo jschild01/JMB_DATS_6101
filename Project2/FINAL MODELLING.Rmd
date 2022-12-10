@@ -24,26 +24,23 @@ options(scientific=T, digits = 3)
 loadPkg("ggplot2")
 ```
 
-# LogRegnot.fully.paid Dataset (Admissions data)
-
+# LogRegnot.fully.paid Dataset
 ## Initialize
 
 ```{r}
 # not.fully.paid <- data.frame(read.csv("LogRegnot.fully.paid.csv")) 
-df <- read.csv("loan_data.csv")
+df <- read.csv("without na.csv")
 head(df)
 summary(df)
 str(df)
 sum(is.na(df))
+df$not.fully.paid=as.numeric(df$not.fully.paid)
 ```
-
-Let us first use the dataset that we are familiar with -- admissions dataset. We have looked at it many different times, using different techniques and methods. We will first re-visit those methods as practices, then try our new logistic regression model. Other than logistic regression, there are yet many more we can learn to analyse the same piece of information. We can use use Tree/Forest methods, KNN, SVM, etc. They all have their strength and weaknesses. First, let us load up the dataframe and take a quick look at the `head()` and `summary()`. Current settings do not show these output in html.
-
 ```{r results='markup'}
 xkablesummary(df)
 ```
 
-We can also find sd or other statistics of the variables using the `sapply()` function, and display as a table.
+Varience of the data:
 
 ```{r sapply}
 # find  sd for all columns, using sapply
@@ -55,7 +52,7 @@ varSD
 xkabledply(as.table(varSD), title = "The sd for each variable in not.fully.paid", wide = TRUE)
 ```
 
-## Effects on Admission by purpose
+## Effects on not.fully paid by purpose
 
 To study the effects on admission by the factor purpose (not.fully.paid and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
 \*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
@@ -64,17 +61,41 @@ To study the effects on admission by the factor purpose (not.fully.paid and purp
 not.fully.paidpurposetable = xtabs(~ not.fully.paid + purpose, data = df)
 not.fully.paidpurposetable
 ```
+## feature selection
+```{r}
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+# load the dataset
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# train the model
+class(df$not.fully.paid)
+model <- train(not.fully.paid~., data=df, method="glm", preProcess="scale", trControl=control)
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+#names(getModelInfo())
+```
+
+
+
+
+
 
 ## Logistic Regression Model
 
-Let us now turn our attention to logistic regression models. Knowing that there is very like an effect on admission by purposes, we run the full model including purpose as well as GRE and GPA.
 
 ```{r logitmodel}
 df$not.fully.paid <- factor(df$not.fully.paid)
 str(df)
 df$purpose <- factor(df$purpose)
 #str(not.fully.paid)
-not.fully.paidLogit <- glm(not.fully.paid ~credit.policy+purpose+int.rate+installment+log.annual.inc+revol.bal, data = df, binomial(link = "logit") )  
+not.fully.paidLogit <- glm(not.fully.paid ~., data = df, binomial(link = "logit") )  
 ```
 
 We can see the summary of the logit model here:
@@ -87,10 +108,7 @@ summary(not.fully.paidLogit)
 xkabledply(not.fully.paidLogit, title = "Logistic Regression :")
 ```
 
-All the coefficients are found significant (small p-values). GRE and GPA have positive effects on admission chance (not.fully.paid = 1), while "higher" purpose (purpose = 4 is highest) negatively affect the admission's likelihood. These are reasonable results and confirms our common beliefs.
-
-
-Before moving on, let us look at the model object `not.fully.paidLogit` a little deeper. The fitted values can be found from `not.fully.paidLogit$fitted.values`. And the first fitted value is `r not.fully.paidLogit$fitted.values[1]`. This is the probability of being not.fully.paidted for data point #1. Compare to the value from `predict(not.fully.paidLogit)` to be `r predict(not.fully.paidLogit)[1]`. 
+Before moving on, let us look at the model object `not.fully.paidLogit` a little deeper. The fitted values can be found from `not.fully.paidLogit$fitted.values`. And the first fitted value is `r not.fully.paidLogit$fitted.values[1]`. This is the probability of being not.fully.paid for data point #1. Compare to the value from `predict(not.fully.paidLogit)` to be `r predict(not.fully.paidLogit)[1]`. 
 
 The `predict()` function gives us the logit value. You can exponentiate to get the odds ratio p/q as `r exp(predict(not.fully.paidLogit)[1])`. And finally, we can find p from p/q, and indeed it is confirmed to be `r 1/(1+exp(-predict(not.fully.paidLogit)[1]))`.
 
@@ -98,6 +116,7 @@ The easier way to get that is simply use `predict(not.fully.paidLogit, type = c(
 
 ```{r logit_fitted_value}
 p_fitted = not.fully.paidLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
+p_fitted
 ```
 
 This is stored in the model as the fitted value for the probability `p` of the first data point. Since the actual data point is a 0/1 True/False value, it is not easy to directly compare them unless we use a cutoff value (default as 0.5) to convert the probability `p` to 0/1.
@@ -109,20 +128,6 @@ Now, for unseen data point, we can use the `predict( )` function to find the mod
 predict(not.fully.paidLogit)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
 ```
 
-**The three options for the `predict()` function in Logit regression:**
-
--   The "response" option `predict(model, newdata=..., type="response") -> pred_response` nicely gives you the probability *p* directly as `r pred_response`.\
--   The "link" option `predict(model, newdata=..., type="link") -> pred_link` which is the default option, gives you the value of the link function. Remember the link function is\
-    `logit(p) = log(p/q) = log(p/1-p)`. The value here is `r pred_link`.\
--   The third option of "term", `predict(model, newdata=..., type="term") -> pred_term`, gives you the individual term contributions. Notice that the constant is also in this "term" object, but it is difficult to use. The three terms (slopes) are like values in a vector here: `pred_term` = [`r pred_term`], while the "intercept term $b_0$" is stored as an attribute `attr(pred_term,"constant")`: `r attr(pred_term,"constant")`.\
-    Note that the sum of all these four values equal to the value of the link function above: `r pred_term[1]` + `r pred_term[2]` + `r pred_term[3]` + `r attr(pred_term,"constant")` = `r sum(pred_term) + attr(pred_term,"constant")`.
-
-
-A quick summary, these different ways of calculating the same thing, which is the predicted probability values from the model.
-
--   Use the built-in type option `predict(not.fully.paidLogit, newdata=newdata1, type="response")` to get the *p* value: `r pred_response`
--   Use the link function value `predict(not.fully.paidLogit, newdata = newdata1, type = "link")` (or without the type argument, since this is the default), to calculate the value *p* `from 1/(1+exp( -linkFunctionValue ))`: `r`1/(1+exp(-pred_link)\`\
--   First find the odds-ratio from exponential of the link-value-function: `r oddsratio`, then calculate the predicted *p* value from `oddsratio / (oddsratio + 1)` = `r oddsratio / (oddsratio + 1)`
 
 ### Confidence Intervals
 
@@ -196,7 +201,7 @@ unloadPkg("pscl")
 
 With the McFadden value of `r not.fully.paidLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 8% of the variations in y is explained by the explanatory variables in the model.
 
-A major weakness of the overall model is likely from the small dataset sample size of `r length(not.fully.paid$not.fully.paid)`. We expect a much higher number of observations will increase the sensitivity of the model.
+A major weakness of the overall model is likely from the small dataset sample size of `r length(df$not.fully.paid)`. We expect a much higher number of observations will increase the sensitivity of the model.
 
 #### Hosmer and Lemeshow test
 

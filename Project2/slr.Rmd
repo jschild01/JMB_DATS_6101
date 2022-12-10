@@ -1,0 +1,114 @@
+---
+title: "SLR"
+author: "MEDHASWETA SEN"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(car)
+df <- read.csv("without na.csv")
+head(df)
+summary(df)
+str(df)
+sum(is.na(df))
+```
+```{r}
+## Scatter Plots
+
+#Based on the 4 variable correlations we have not looked at yet greater than 0.4 or less than -0.4, these scatter plots allow us to get a better understanding of that correlation.
+```
+
+```{r echo=FALSE}
+loans %>%
+  ggplot(aes(x = fico, y = int.rate)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  labs(title = "Interest Rate vs FICO Score",
+       x = "FICO Score", y = "Interest Rate") +
+  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
+  theme_minimal()
+```
+
+```{r}
+# fit linear model
+linear_model <- lm(int.rate~ fico, data=df)
+  
+# view summary of linear model
+summary(linear_model)
+
+scatterplot(int.rate~ fico, data=df)
+```
+
+
+```{r echo=FALSE}
+loans %>%
+  ggplot(aes(x = int.rate, y = revol.util)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  labs(title = "Revolving Line Utilization Rate vs Interest Rate",
+       x = "Interest Rate", y = "Revolving Line Utilization Rate") +
+  scale_x_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  theme_minimal()
+```
+
+
+```{r}
+# fit linear model
+linear_model <- lm(revol.util~ int.rate, data=df)
+  
+# view summary of linear model
+summary(linear_model)
+
+scatterplot(revol.util~ int.rate, data=df)
+```
+
+```{r echo=FALSE}
+loans %>%
+  ggplot(aes(x = log.annual.inc, y = installment)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  labs(title = "Installment vs Log of Annual Income",
+       x = "Log of Annual Income", y = "Installment") +
+  theme_minimal()
+```
+
+
+
+```{r}
+# fit linear model
+linear_model <- lm(installment~ log.annual.inc, data=df)
+  
+# view summary of linear model
+summary(linear_model)
+
+scatterplot(installment~ log.annual.inc, data=df)
+```
+
+```{r echo=FALSE}
+loans %>%
+  ggplot(aes(x = fico, y = revol.util)) +
+  geom_point(color = "steelblue", alpha = 0.2) +
+  labs(title = "Revolving Line Utilization Rate vs FICO Score",
+       x = "FICO Score", y = "Revolving Line Utilization Rate") +
+  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  theme_minimal()
+```
+
+Brian: I'll add some more text here going over what we said in the presentation.
+
+```{r}
+# fit linear model
+linear_model <- lm(revol.util~ fico, data=df)
+  
+# view summary of linear model
+summary(linear_model)
+
+scatterplot(revol.util~ fico, data=df)
+```
+
+
