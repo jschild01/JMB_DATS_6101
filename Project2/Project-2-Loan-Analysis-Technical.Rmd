@@ -209,7 +209,7 @@ loans_tree$credit.policy <- as.factor(loans_tree$credit.policy) %>%
 #creditfit <- rpart(credit.policy ~ int.rate + fico + purpose + installment + log.annual.inc
 #+ dti + inq.last.6mths, data=loans_tree, cp=.00001, method="class", control = list(maxdepth = 4) )
 
-creditfit <- rpart(credit.policy ~ purpose	+ int.rate + installment + log.annual.inc	+ dti	+ fico + days.with.cr.line + 	revol.bal	+ revol.util + inq.last.6mths	+ delinq.2yrs + pub.rec + not.fully.paid + has.delinq.2yrs + has.pub.rec + log.revol.bal + has.revol.bal, data = loans_tree, cp=.01, method="class", contro=list(maxdepth=4))
+creditfit <- rpart(credit.policy ~ purpose	+ int.rate + installment + log.annual.inc	+ dti	+ fico +  revol.util + inq.last.6mths	+ delinq.2yrs + pub.rec + not.fully.paid + has.delinq.2yrs + has.pub.rec, data = loans_tree, cp=.01, method="class", contro=list(maxdepth=4))
 
 printcp(creditfit) # display the results 
 plotcp(creditfit) # visualize cross-validation results
@@ -368,7 +368,7 @@ loans_tree_nfp$not.fully.paid <- as.factor(loans_tree_nfp$not.fully.paid) %>%
 #creditfit <- rpart(credit.policy ~ int.rate + fico + purpose + installment + log.annual.inc
 #+ dti + inq.last.6mths, data=loans_tree, cp=.00001, method="class", control = list(maxdepth = 4) )
 
-creditfit_nfp <- rpart(not.fully.paid ~ purpose	+ int.rate + installment + log.annual.inc	+ dti	+ fico + days.with.cr.line + revol.bal + revol.util + inq.last.6mths	+ delinq.2yrs + pub.rec + credit.policy + has.delinq.2yrs + has.pub.rec + log.revol.bal + has.revol.bal, data = loans_tree_nfp, cp=.001, method="class", control=list(maxdepth=4))
+creditfit_nfp <- rpart(not.fully.paid ~ credit.policy	+ purpose + int.rate + installment + log.annual.inc + dti + fico + days.with.cr.line + revol.bal + revol.util + inq.last.6mths + delinq.2yrs + pub.rec + not.fully.paid + has.delinq.2yrs + has.pub.rec + log.revol.bal + has.revol.bal, data = loans_tree_nfp, cp=.001, method="class", control=list(maxdepth=4))
 
 printcp(creditfit_nfp) # display the results 
 plotcp(creditfit_nfp) # visualize cross-validation results
