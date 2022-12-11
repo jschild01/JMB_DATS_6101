@@ -65,11 +65,10 @@ Our work is stored on our team GitHub here: https://github.com/jschild01/JMB_DAT
 # Preparing the Dataset for Modeling
 
 ## Converting Variables
-From our EDA in project 1 we know that the `credit.policy` and `not.fully.paid` variables function as logicals, and the `purpose` variable functions as a factor with 7 levels. We will start by formally converting these variables from numerical date-types in R to logicals and the factor date-type, respectively.
+From our EDA in project 1 we know that the `credit.policy` and `not.fully.paid` variables function as logicals, and the `purpose` variable functions as a factor with 7 levels. We will start by formally converting these variables from numerical data-types in R to logical and the factor data-types, respectively.
 
 ```{r}
 # We determined this makes sense to do from our EDA
-str(loans) # keep??
 loans$credit.policy <- as.logical(loans$credit.policy)
 loans$not.fully.paid <- as.logical(loans$not.fully.paid)
 
@@ -91,9 +90,9 @@ loans <- loans %>%
 
 
 ## Revolving Balance Transformation
-From our EDA we saw that the `revol.bal` variable had a wide range of values as well as outlier issues. We wondered if it would work better if we took the natural log of it, similar to how the income provided in the dataset the dataset (the `log.annual.inc` variable) is in the form of the natural log. However, some values for `revol.bal` are 0, and taking the natural log of that results in -Inf. One way to deal with this without removing those values is to add 1 to all of the values for `revol.bal` before taking the natural log. 
+From our EDA we saw that the `revol.bal` variable had a wide range of values as well as outlier issues. We wondered if it would work better if we took the natural log of it, similar to how the income provided in the dataset (the `log.annual.inc` variable) is in the form of the natural log. However, some values for `revol.bal` are 0, and taking the natural log of that results in -Inf. One way to deal with this without removing those values is to add 1 to all of the values for `revol.bal` before taking the natural log. 
 
-Given the range of these values (the IQr is `r IQR(loans$revol.bal)`) adding one should have a negligible effect, and adding one to all values keeps the data consistent. In case it is significant that the `revol.bal` is 0 we will add a logical variable `has.revol.bal` based on whether the value of `revol.bal` is 0 or greater than 0.
+Given the range of these values (the IQR is `r IQR(loans$revol.bal)`) adding one should have a negligible effect, and adding one to all values keeps the data consistent. In case it is significant that the `revol.bal` is 0 we will add a logical variable `has.revol.bal` based on whether the value of `revol.bal` is 0 or greater than 0.
 
 ```{r}
 # Some loans have a revol.bal value of 0, the natural log of which is -Inf
@@ -126,7 +125,7 @@ Some notable observations of this:
 2. Similarly, `has.pub.rec` doesn't have any strong correlations, and the 2 potentially useful ones (`int.rate` and `fico`) are   the same as `pub.rec`.
 3. `log.revol.bal` has a stronger correlation with `dti` and a much stronger correlation with `revol.util` compared to `revol.bal`.
 4. `log.revol.bal` has a weaker correlation with `credit.policy` compared to `revol.bal`.
-5. `has.revol.bal` does not have a significant correlation with anything (`log.revol.bal` excepted) except `revol.util`, where the correlation is significantly weaker than that of `log.revol.bal`.
+5. `has.revol.bal` does not have a significant correlation with anything (`log.revol.bal` excepted) except `revol.util`, where the correlation is weaker than that of `log.revol.bal`.
 
 
 From this we can conclude that converting `delinq.2yrs` and `pub.rec` to logicals did not add any advantage for our dataset. We can also conclude that the `has.revol.bal` variable is not necessary and will not add value to our analysis beyond what `log.revol.bal` already covers. Successfully eliminating these as possibilities increases our confidence in the use of their original structures.
@@ -136,7 +135,7 @@ Lastly, we see that taking the natural log of `revol.bal` might be useful, as `l
 
 ## Updated Visuals
 
-These are updated histograms, boxplots, and Q-Q plots with the log.revol.bal added variable. We will use these to briefly review the EDA we did for the first project.
+These are updated histograms, boxplots, and Q-Q plots with the `log.revol.bal` added variable. We will use these to briefly review the EDA we did for the first project.
 
 
 ### Histograms
@@ -330,17 +329,14 @@ To add: further comments on the statistics of the model.
 
 ### ROC Curve
 
-Can we do this for this type of model?
+Another way that we can evaluate the performance of the model is to look at the ROC curve and the area under the curve (AUC).
 
 ```{r}
-library(pROC)
-
 # loans_tree$prediction <- predict(creditfit, type = "vector")
 loans_tree$prediction <- predict(creditfit, type = "prob")[,2]
 tree_roc <- roc(credit.policy ~ prediction, data=loans_tree)
 auc(tree_roc) # area-under-curve prefer 0.8 or higher.
 plot(tree_roc)
-
 
 ```
 
@@ -466,17 +462,14 @@ For certain statistics this model performs relatively poorly, with 1.3% specific
 
 ### ROC Curve
 
-Can we do this for this type of model?
+Another way that we can evaluate the performance of the model is to look at the ROC curve and the area under the curve (AUC).
 
 ```{r}
-library(pROC)
-
 # loans_tree$prediction <- predict(creditfit, type = "vector")
 loans_tree_nfp$prediction <- predict(creditfit_nfp, type = "prob")[,2]
 tree_roc_nfp <- roc(not.fully.paid ~ prediction, data=loans_tree_nfp)
 auc(tree_roc_nfp) # area-under-curve prefer 0.8 or higher.
 plot(tree_roc_nfp)
-
 
 ```
 
@@ -484,7 +477,11 @@ plot(tree_roc_nfp)
 The AUC of the ROC is `r auc(tree_roc)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model.
 
 
+
 # Simple Linear Regression
+
+For the 4 combinations of variables that we identified as having a notable level of correlation (greater than 0.4 or less than -0.4), it makes sense to see if we can model these relationships with linear regression.
+
 
 ## Interest Rate vs FICO Score
 
@@ -509,6 +506,7 @@ loans %>%
   theme_minimal()
 ```
 
+To Add: comments on the model
 
 
 ## Revolving Utilization Rate vs Interest Rate
@@ -534,6 +532,8 @@ loans %>%
   theme_minimal()
 ```
 
+To Add: comments on the model
+
 
 ## Installment vs Natural Log of Annual Income
 
@@ -555,6 +555,8 @@ loans %>%
        x = "Log of Annual Income", y = "Installment") +
   theme_minimal()
 ```
+
+To Add: comments on the model
 
 
 ## Revolving Utilization Rate vs FICO Score
@@ -579,6 +581,8 @@ loans %>%
   scale_y_continuous(labels = label_percent(scale = 1)) +
   theme_minimal()
 ```
+
+To Add: comments on the model
 
 
 
@@ -673,7 +677,7 @@ plot(mod1)
 
 ## Effects on Admission by purpose
 
-To study the effects on admission by the factor purpose (credit.policy and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
+To study the effects on admission by the factor purpose (credit.policy and purpose are both categorical variables), we can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
 \*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
 
 ```{r}
