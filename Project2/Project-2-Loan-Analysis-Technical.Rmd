@@ -493,17 +493,17 @@ linear_model <- lm(int.rate ~ fico, data=loans)
 summary(linear_model)
 
 # scatterplot with regression line and confidence interval
-# scatterplot(int.rate ~ fico, data = loans)
+scatterplot(int.rate ~ fico, data = loans)
 
-loans %>%
-  ggplot(aes(x = fico, y = int.rate)) +
-  geom_point(color = "steelblue", alpha = 0.2) +
-  geom_smooth(method = "lm", se = T) +
-  labs(title = "Interest Rate vs FICO Score",
-       x = "FICO Score", y = "Interest Rate") +
-  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
-  scale_y_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
-  theme_minimal()
+#loans %>%
+#  ggplot(aes(x = fico, y = int.rate)) +
+#  geom_point(color = "steelblue", alpha = 0.2) +
+#  geom_smooth(method = "lm", se = T) +
+#  labs(title = "Interest Rate vs FICO Score",
+#       x = "FICO Score", y = "Interest Rate") +
+#  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+#  scale_y_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
+#  theme_minimal()
 ```
 
 To Add: comments on the model
@@ -519,17 +519,17 @@ linear_model <- lm(revol.util ~ int.rate, data=loans)
 summary(linear_model)
 
 # scatterplot with regression line and confidence interval
-# scatterplot(revol.util ~ int.rate, data = loans)
+scatterplot(revol.util ~ int.rate, data = loans)
 
-loans %>%
-  ggplot(aes(x = int.rate, y = revol.util)) +
-  geom_point(color = "steelblue", alpha = 0.2) +
-  geom_smooth(method = "lm") +
-  labs(title = "Revolving Line Utilization Rate vs Interest Rate",
-       x = "Interest Rate", y = "Revolving Line Utilization Rate") +
-  scale_x_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
-  scale_y_continuous(labels = label_percent(scale = 1)) +
-  theme_minimal()
+#loans %>%
+#  ggplot(aes(x = int.rate, y = revol.util)) +
+#  geom_point(color = "steelblue", alpha = 0.2) +
+#  geom_smooth(method = "lm") +
+#  labs(title = "Revolving Line Utilization Rate vs Interest Rate",
+#       x = "Interest Rate", y = "Revolving Line Utilization Rate") +
+#  scale_x_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
+#  scale_y_continuous(labels = label_percent(scale = 1)) +
+#  theme_minimal()
 ```
 
 To Add: comments on the model
@@ -545,15 +545,15 @@ linear_model <- lm(installment ~ log.annual.inc, data=loans)
 summary(linear_model)
 
 # scatterplot with regression line and confidence interval
-# scatterplot(installment ~ log.annual.inc, data = loans)
+scatterplot(installment ~ log.annual.inc, data = loans)
 
-loans %>%
-  ggplot(aes(x = log.annual.inc, y = installment)) +
-  geom_point(color = "steelblue", alpha = 0.2) +
-  geom_smooth(method = "lm") +
-  labs(title = "Installment vs Log of Annual Income",
-       x = "Log of Annual Income", y = "Installment") +
-  theme_minimal()
+#loans %>%
+#  ggplot(aes(x = log.annual.inc, y = installment)) +
+#  geom_point(color = "steelblue", alpha = 0.2) +
+#  geom_smooth(method = "lm") +
+#  labs(title = "Installment vs Log of Annual Income",
+#       x = "Log of Annual Income", y = "Installment") +
+#  theme_minimal()
 ```
 
 To Add: comments on the model
@@ -569,22 +569,48 @@ linear_model <- lm(revol.util ~ fico, data=loans)
 summary(linear_model)
 
 # scatterplot with regression line and confidence interval
-# scatterplot(revol.util ~ fico, data = loans)
+scatterplot(revol.util ~ fico, data = loans)
 
-loans %>%
-  ggplot(aes(x = fico, y = revol.util)) +
-  geom_point(color = "steelblue", alpha = 0.2) +
-  geom_smooth(method = "lm") +
-  labs(title = "Revolving Line Utilization Rate vs FICO Score",
-       x = "FICO Score", y = "Revolving Line Utilization Rate") +
-  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
-  scale_y_continuous(labels = label_percent(scale = 1)) +
-  theme_minimal()
+#loans %>%
+#  ggplot(aes(x = fico, y = revol.util)) +
+#  geom_point(color = "steelblue", alpha = 0.2) +
+#  geom_smooth(method = "lm") +
+#  labs(title = "Revolving Line Utilization Rate vs FICO Score",
+#       x = "FICO Score", y = "Revolving Line Utilization Rate") +
+#  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+#  scale_y_continuous(labels = label_percent(scale = 1)) +
+#  theme_minimal()
 ```
 
-To Add: comments on the model
+```{r}
+# fit linear model
+linear_model <- lm(revol.util ~ log.revol.bal, data=loans)
+  
+# view summary of linear model
+summary(linear_model)
 
+# scatterplot with regression line and confidence interval
+scatterplot(revol.util ~ log.revol.bal, data = loans)
 
+#loans %>%
+#  ggplot(aes(x = fico, y = revol.util)) +
+#  geom_point(color = "steelblue", alpha = 0.2) +
+#  geom_smooth(method = "lm") +
+#  labs(title = "Revolving Line Utilization Rate vs FICO Score",
+#       x = "FICO Score", y = "Revolving Line Utilization Rate") +
+#  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
+#  scale_y_continuous(labels = label_percent(scale = 1)) +
+#  theme_minimal()
+```
+From the heat-map we see that there are five significant correlations . In order to further explore that we plot 5 scatter plots with simple linear regressions. The first one is interest rate vs fico. We can see from the graph that the relation is almost linear as the linear regression line lies close to the true regression line. This is further confirmed by the adjusted r^2 value that is relatively significant at 51% and the p value at least than 0.05.
+
+The second one is revolving utility vs interest rate. We can see from the graph that the relation is not as linear as the linear regression line lies tangent to the true regression line. This is further confirmed by the adjusted r^2 value that is relatively low at 21% and the p value at least than 0.05.
+
+The third one is installment vs log.annual.inc. We can see from the graph that the relation is not as linear as the linear regression line lies tangent to the true regression line but converges as both variables increase. This is further confirmed by the adjusted r^2 value that is relatively low at 20% and the p value at least than 0.05.
+
+The fourth one is revolving utility vs fico score. We can see from the graph that the relation is not as linear as the linear regression line lies relatively loser to the true regression line in comparison to the previous two cases. This is further confirmed by the adjusted r^2 value that is relatively low at 29% and the p value at least than 0.05.
+
+In the last graph we can see that there is a strong positive relation between the two variables namely log.revol.bal and revol.util of 0.5. However,we see that since the true regression is far from linear the adjusted r^2 is relatively low at 24.85%. 
 
 # Multiple Linear Regression
 
