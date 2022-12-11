@@ -214,7 +214,7 @@ creditfit <- rpart(credit.policy ~ purpose	+ int.rate + installment + log.annual
 
 printcp(creditfit) # display the results 
 plotcp(creditfit) # visualize cross-validation results
-#summary(creditfit) # detailed summary of splits; show these?
+summary(creditfit) # detailed summary of splits; show these?
 
 ```
 
@@ -348,6 +348,7 @@ plot(tree_roc)
 The AUC of the ROC is `r auc(tree_roc)`, which is greater than the 0.8 threshold, so we would consider this to be a good indicator/model.
 
 
+
 ## Not Fully Paid
 ### Preparing and Building the Tree
 Similar to what we did for, `credit.policy`, was also did to `not.fully.paid` and treated it as a 2-level factor for the tree model. 
@@ -375,6 +376,7 @@ creditfit_nfp <- rpart(not.fully.paid ~ purpose	+ int.rate + installment + log.a
 
 printcp(creditfit_nfp) # display the results 
 plotcp(creditfit_nfp) # visualize cross-validation results
+summary(creditfit_nfp) # detailed summary of splits; show these?
 
 ```
 
