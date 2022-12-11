@@ -697,7 +697,29 @@ par(mfrow=c(2,2))
 plot(mod1)
 ```
 
+```{r}
+library(lmtest)
+library(sandwich)
+coeftest(mod1, vcov = vcovHC(mod1, "HC1"))
+```
 
+```{r}
+mod2 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans) # Fit our model to get our residuals.
+loans$resi <- mod2$residuals
+varfunc.ols <- lm(log(resi^2) ~ log(fico)+log(installment)+credit.policy+log.annual.inc, data = loans)
+summary(varfunc.ols)
+```
+```{r}
+varfunc.ols <- lm(log(resi^2) ~ log(fico)+log(installment)+credit.policy+log.annual.inc, data = loans)
+loans$varfunc <- exp(varfunc.ols$fitted.values)
+food.gls <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, weights = 1/sqrt(varfunc), data = loans)
+summary(food.gls)
+```
+```{r}
+lmtest::bptest(food.gls)
+par(mfrow=c(2,2))
+plot(food.gls)
+```
 
 # Logistic Regression Credit Policy
 
