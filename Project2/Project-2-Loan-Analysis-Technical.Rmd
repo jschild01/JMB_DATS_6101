@@ -349,6 +349,19 @@ plot(tree_roc)
 The AUC of the ROC is `r auc(tree_roc)`, which is greater than the 0.8 threshold, so we would consider this to be a good indicator/model.
 
 
+## Applying the model
+```{r results = "show", echo=FALSE}
+# We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
+
+loans_tree %>%
+  mutate(vector_prediction = predict(creditfit, type = "vector")) %>%
+  group_by(vector_prediction) %>%
+  summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
+  ungroup() %>%
+  rename(`Meets Predicted Credit Policy` = vector_prediction, `Percent Not Fully Paid` = percent_not_fully_paid) %>%
+  kable(align = "c") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
+```
 
 ## Not Fully Paid
 ### Preparing and Building the Tree
@@ -800,6 +813,19 @@ loans <- loans %>%
 ```
 
 
+## Applying the model
+```{r results = "show", echo=FALSE}
+# We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
+loans %>%
+  mutate(vector_prediction = round(predict(credit.policyLogit, type = "response")))%>%
+  group_by(vector_prediction) %>%
+  summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
+  ungroup() %>%
+  rename(`Meets Predicted Credit Policy` = vector_prediction, `Percent Not Fully Paid` = percent_not_fully_paid) %>%
+  kable(align = "c") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
+```
+
 
 # Logistic Regression Not Fully Paid
 
@@ -984,6 +1010,19 @@ The p-value of `r not.fully.paidLogitHoslem$p.value` is relatively high. This in
 loans <- loans %>%
   select(-prob)
 ```
+
+# Model Application
+
+```{r}
+
+```
+
+
+
+
+
+
+
 
 # Multiple Linear Regression
 
