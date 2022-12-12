@@ -617,92 +617,6 @@ The fourth one is revolving utility vs fico score. We can see from the graph tha
 
 In the last graph we can see that there is a strong positive relation between the two variables namely log.revol.bal and revol.util of 0.5. However,we see that since the true regression is far from linear the adjusted r^2 is relatively low at 24.85%. 
 
-# Multiple Linear Regression
-
-
-```{r}
-set.seed(7)
-# load the library
-library(mlbench)
-library(caret)
-# load the dataset
-# prepare training scheme
-control <- trainControl(method="repeatedcv", number=10, repeats=3)
-# train the model
-class(loans$not.fully.paid)
-model <- train(int.rate~., data=loans, method="lm", preProcess="scale", trControl=control)
-# estimate variable importance
-importance <- varImp(model, scale=FALSE)
-# summarize importance
-print(importance)
-# plot importance
-plot(importance)
-#names(getModelInfo())
-```
-
-
-```{r}
-model <- lm(int.rate ~ fico+installment+purpose+dti+inq.last.6mths+credit.policy+log.annual.inc, data = loans)
-summary(model)
-```
-
-```{r}
-model$coefficients
-model$call
-```
-
-```{r results='markup'}
-coef(model)
-confint(model)
-```
-```{r}
-library("broom")
-
-tidyfinal <-  tidy(model)
-tidyfinal
-
-Model_Summary <- augment(model)
-str(Model_Summary)
-head(Model_Summary)
-```
-
-```{r}
-par(mfrow=c(2,2))
-plot(model)
-```
-```{r}
-vif(model)
-```
-
-```{r}
-lmtest::bptest(model)
-```
-
-```{r}
-car::ncvTest(model)
-```
-```{r}
-distBCMod <- caret::BoxCoxTrans(loans$int.rate)
-print(distBCMod)
-
-```
-
-```{r}
-loans <- cbind(loans, dist_new=predict(distBCMod, loans$int.rate)) 
-head(loans) 
-```
-```{r}
-mod1 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans)
-summary(mod1)
-lmtest::bptest(mod1)
-```
-
-```{r}
-par(mfrow=c(2,2))
-plot(mod1)
-```
-
-
 
 # Logistic Regression Credit Policy
 
@@ -879,6 +793,11 @@ credit.policyLogitHoslem
 
 The p-value of `r credit.policyLogitHoslem$p.value` is relatively low. This indicates the model is y a good fit, despite all the coefficients are significant.
 
+```{r}
+# Removing the added prob variable
+loans <- loans %>%
+  select(-prob)
+```
 
 
 
@@ -1060,6 +979,96 @@ not.fully.paidLogitHoslem
 
 The p-value of `r not.fully.paidLogitHoslem$p.value` is relatively high. This indicates the model is not really a good fit, despite all the coefficients are significant.
 
+```{r}
+# Removing the added prob variable
+loans <- loans %>%
+  select(-prob)
+```
+
+# Multiple Linear Regression
+
+
+```{r}
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+# load the dataset
+# prepare training scheme
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+# train the model
+class(loans$not.fully.paid)
+model <- train(int.rate~., data=loans, method="lm", preProcess="scale", trControl=control)
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+#names(getModelInfo())
+```
+
+
+```{r}
+model <- lm(int.rate ~ fico+installment+purpose+dti+inq.last.6mths+credit.policy+log.annual.inc, data = loans)
+summary(model)
+```
+
+```{r}
+model$coefficients
+model$call
+```
+
+```{r results='markup'}
+coef(model)
+confint(model)
+```
+```{r}
+library("broom")
+
+tidyfinal <-  tidy(model)
+tidyfinal
+
+Model_Summary <- augment(model)
+str(Model_Summary)
+head(Model_Summary)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(model)
+```
+```{r}
+vif(model)
+```
+
+```{r}
+lmtest::bptest(model)
+```
+
+```{r}
+car::ncvTest(model)
+```
+```{r}
+distBCMod <- caret::BoxCoxTrans(loans$int.rate)
+print(distBCMod)
+
+```
+
+```{r}
+loans <- cbind(loans, dist_new=predict(distBCMod, loans$int.rate)) 
+head(loans) 
+```
+```{r}
+mod1 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans)
+summary(mod1)
+lmtest::bptest(mod1)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(mod1)
+```
 
 
 
