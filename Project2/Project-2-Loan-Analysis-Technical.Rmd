@@ -209,7 +209,7 @@ loans_tree$credit.policy <- as.factor(loans_tree$credit.policy) %>%
 #creditfit <- rpart(credit.policy ~ int.rate + fico + purpose + installment + log.annual.inc
 #+ dti + inq.last.6mths, data=loans_tree, cp=.00001, method="class", control = list(maxdepth = 4) )
 
-creditfit <- rpart(credit.policy ~ purpose	+ int.rate + installment + log.annual.inc	+ dti	+ fico +  revol.util + inq.last.6mths	+ delinq.2yrs + pub.rec + not.fully.paid + has.delinq.2yrs + has.pub.rec, data = loans_tree, cp=.01, method="class", contro=list(maxdepth=4))
+creditfit <- rpart(credit.policy ~ purpose	+ int.rate + installment + log.annual.inc	+ dti	+ fico + revol.util + inq.last.6mths	+ delinq.2yrs + pub.rec + not.fully.paid + has.delinq.2yrs + has.pub.rec, data = loans_tree, cp=.01, method="class", contro=list(maxdepth=4))
 
 printcp(creditfit) # display the results 
 plotcp(creditfit) # visualize cross-validation results
@@ -233,6 +233,8 @@ rpart.plot(creditfit, uniform=TRUE, main="Classification Tree for Credit.Policy"
 #text(creditfit, use.n=TRUE, all=TRUE, cex=.75)
 
 ```
+FIX**********
+
 Of all of the loans, 1231 had more greater than or equal to four `inq.last.6mths`. Of those 1231:
 
 * 1047 had a `FICO` lower than 740 and failed to meet the `credit.policy`
@@ -273,6 +275,9 @@ print('Class: ')
 confusion_matrix$byClass
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
 ```
+
+FIX****************
+
 Based on the Kappa statistic of `r round(confusion_matrix$overall["Kappa"], digits=2)` we would evaluate this classifier as almost perfect agreement.
 
 To add: other comments on the overall stats of the model.
@@ -368,7 +373,7 @@ loans_tree_nfp$not.fully.paid <- as.factor(loans_tree_nfp$not.fully.paid) %>%
 #creditfit <- rpart(credit.policy ~ int.rate + fico + purpose + installment + log.annual.inc
 #+ dti + inq.last.6mths, data=loans_tree, cp=.00001, method="class", control = list(maxdepth = 4) )
 
-creditfit_nfp <- rpart(not.fully.paid ~ credit.policy	+ purpose + int.rate + installment + log.annual.inc + dti + fico + days.with.cr.line + revol.bal + revol.util + inq.last.6mths + delinq.2yrs + pub.rec + not.fully.paid + has.delinq.2yrs + has.pub.rec + log.revol.bal + has.revol.bal, data = loans_tree_nfp, cp=.001, method="class", control=list(maxdepth=4))
+creditfit_nfp <- rpart(not.fully.paid ~ purpose	+ int.rate + installment + log.annual.inc	+ dti	+ fico + days.with.cr.line + revol.bal + revol.util + inq.last.6mths	+ delinq.2yrs + pub.rec + credit.policy + has.delinq.2yrs + has.pub.rec + log.revol.bal + has.revol.bal, data = loans_tree_nfp, cp=.001, method="class", control=list(maxdepth=4))
 
 printcp(creditfit_nfp) # display the results 
 plotcp(creditfit_nfp) # visualize cross-validation results
@@ -697,29 +702,7 @@ par(mfrow=c(2,2))
 plot(mod1)
 ```
 
-```{r}
-library(lmtest)
-library(sandwich)
-coeftest(mod1, vcov = vcovHC(mod1, "HC1"))
-```
 
-```{r}
-mod2 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans) # Fit our model to get our residuals.
-loans$resi <- mod2$residuals
-varfunc.ols <- lm(log(resi^2) ~ log(fico)+log(installment)+credit.policy+log.annual.inc, data = loans)
-summary(varfunc.ols)
-```
-```{r}
-varfunc.ols <- lm(log(resi^2) ~ log(fico)+log(installment)+credit.policy+log.annual.inc, data = loans)
-loans$varfunc <- exp(varfunc.ols$fitted.values)
-food.gls <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, weights = 1/sqrt(varfunc), data = loans)
-summary(food.gls)
-```
-```{r}
-lmtest::bptest(food.gls)
-par(mfrow=c(2,2))
-plot(food.gls)
-```
 
 # Logistic Regression Credit Policy
 
