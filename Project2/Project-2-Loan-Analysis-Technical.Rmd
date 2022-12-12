@@ -492,7 +492,7 @@ plot(tree_roc_nfp)
 ```
 
 
-The AUC of the ROC is `r auc(tree_roc)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model.
+The AUC of the ROC is `r auc(tree_roc_nfp)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model.
 
 
 
@@ -599,6 +599,9 @@ scatterplot(revol.util ~ fico, data = loans)
 #  scale_y_continuous(labels = label_percent(scale = 1)) +
 #  theme_minimal()
 ```
+
+
+Revolving Utilization Rate vs Natural Log of Revolving Balance
 
 ```{r}
 # fit linear model
@@ -817,7 +820,7 @@ loans <- loans %>%
 ```{r results = "show", echo=FALSE}
 # We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
 loans %>%
-  mutate(vector_prediction = round(predict(credit.policyLogit, type = "response")))%>%
+  mutate(vector_prediction = round(predict(credit.policyLogit, type = "response"))) %>%
   group_by(vector_prediction) %>%
   summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
   ungroup() %>%
