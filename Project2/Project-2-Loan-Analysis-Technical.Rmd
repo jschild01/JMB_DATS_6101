@@ -1000,13 +1000,13 @@ par(mfrow=c(2,2))
 plot(mlr_int_model_2)
 ```
 
-Note here the first linear model built with the features with the highest importance has no multicolinearity but has high heteroscedasticity. In order to remove that we performed a box cox transformation. That reduced the heteroscedasticity but did not solve the problem So, I used the sandwich library and that helped. The resulting model is homoroscedastic and explains 67%. 
+Note here the first linear model built with the features with the highest importance has no multicolinearity but has high heteroscedasticity. In order to remove that we performed a box cox transformation. That reduced the heteroscedasticity but did not solve the problem So, I used the sandwich library and that helped. The resulting model is homoscedastic and explains 67%. 
 
 
 
 # LASSO Regression
 
-We decided to try LASSO regression as well to see if we could get a better model with this method.
+We decided to try LASSO regression as well to see if we could get a better model for interest rate with this method.
 
 ```{r results="show"}
 loans_lasso <- loans
