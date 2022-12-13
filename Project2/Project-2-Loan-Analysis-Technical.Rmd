@@ -911,6 +911,8 @@ The p-value of `r logit_nfp_hoslem$p.value` is relatively high. This indicates t
 
 # Multiple Linear Regression for Interest Rate
 
+Since we know that interest rate is higher for riskier loans we wanted to test that by building a model to predict interest rate.
+
 ## Feature Selection
 
 ```{r}
@@ -931,8 +933,6 @@ print(mlr_int_importance)
 
 # plot importance
 plot(mlr_int_importance)
-
-#names(getModelInfo())
 ```
 
 
@@ -999,6 +999,8 @@ lmtest::bptest(mlr_int_model_2)
 par(mfrow=c(2,2))
 plot(mlr_int_model_2)
 ```
+
+Note here the first linear model built with the features with the highest importance has no multicolinearity but has high heteroscedasticity. In order to remove that we performed a box cox transformation. That reduced the heteroscedasticity but did not solve the problem So, I used the sandwich library and that helped. The resulting model is homoroscedastic and explains 67%. 
 
 
 
