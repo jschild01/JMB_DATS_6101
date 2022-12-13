@@ -39,7 +39,12 @@ library(caret) # For the classification tree model
 set.seed(1) # For the classification tree model
 library(rpart.plot) # For plotting nice looking classification trees
 library(pROC) # For ROC/AUC
-library(car)
+library(car) # for the logistic regression
+library(mlbench) # for the logistic regression
+library(regclass) # for the logistic regression
+library(ResourceSelection) # use the hoslem.test() for logit model evaluation
+library(pscl) # The pR2() function calculates McFadden statistics for logit model evaluaiton
+library(broom) # For tidying models
 
 # Read in the data from the working directory
 loans <- read_csv("loan_data.csv")
@@ -187,11 +192,15 @@ loans %>%
 ```
 
 
+# Models Chosen
 
-# Classification Trees
 
-## Credit Policy
-### Preparing and Building the Tree
+
+
+
+# Classification Tree for Credit Policy
+
+## Preparing and Building the Tree
 Since one of our variables of intrest, `credit.policy` is a logical, we can treat is as a 2-level factor and build a classification tree model using the variables it has significant correlation with, in this case `int.rate`, `fico`, and `inq.last.6mths`.
 
 For this variable we are interested in the loans where the value is `FALSE`. That is, loans that do not meet the credit underwriting criteria, and therefore are more at risk of defaulting. These loans are in the minority. We will rename the `FALSE` values to `Fail`, indicating that the loan fails to meet the underwriting criteria, and rename the `TRUE` values to `Meets`, indicating that the loan meets the underwriting criteria. 
@@ -213,18 +222,16 @@ creditfit <- rpart(credit.policy ~ purpose	+ int.rate + installment + log.annual
 
 printcp(creditfit) # display the results 
 plotcp(creditfit) # visualize cross-validation results
-summary(creditfit) # detailed summary of splits; show these?
+summary(creditfit) # detailed summary of splits
 
 ```
 
+Building the classification tree, we can see that `fico`, `inq.last.6mths`, and `dti` were used in the tree construction and the tree was split 4 times.
 
-Building the classification tree, we can see that `days.with.cr.line`, `fico`, `inq.last.6mths`, and `revol.bal` were used in the tree construction and the tree was split 5 times.
 
+## Visualizing the Tree
 
-### Visualizing the Tree
-
-We can better visualize the tree by plotting it out. We can see the `inq.last.6mths` threshold of greater than or equal to four, as well as the two thresholds of 740 and 660 or `FICO` scores. It details that of our 9578 loan sample, there are 1868 loans that failed to meet the `credit.policy` and 7710 that did. 
-
+We can better visualize the tree by plotting it out. We can see the `inq.last.6mths` threshold of greater than or equal to four, as well as the two thresholds of 740 and 660 for `FICO` scores. It details that of our 9578 loan sample, there are 1868 loans that failed to meet the `credit.policy` and 7710 that did. 
 
 ```{r}
 # plot the tree and add text
@@ -233,9 +240,9 @@ rpart.plot(creditfit, uniform=TRUE, main="Classification Tree for Credit.Policy"
 #text(creditfit, use.n=TRUE, all=TRUE, cex=.75)
 
 ```
-FIX**********
 
-Of all of the loans, 1231 had more greater than or equal to four `inq.last.6mths`. Of those 1231:
+
+Of all of the loans, 1231 had greater than or equal to four `inq.last.6mths`. Of those 1231:
 
 * 1047 had a `FICO` lower than 740 and failed to meet the `credit.policy`
 * 21 had a `FICO` score 740 or higher and failed to meet the `credit.policy`
@@ -251,19 +258,12 @@ Conversely, of all of the loans, 8347 had less than four `inq.last.6mths`. Of th
 * 448 had a `FICO` score 660 or higher and failed to meet the `credit.policy`
 * 7545 had a `FICO` score 660 or higher and met the `credit.policy`
 
-This indicates that applicants will likely need a `FICO` score of only 660 or higher if they have less than four `inq.last.6mths` in order to anticipate meeting the `credit.policy`.
+This indicates that applicants will likely need a `FICO` score of only 660 or higher if they have less than four `inq.last.6mths` in order to anticipate meeting the `credit.policy`. We do not consider the threshold for `dti` to be that meaningful because the value of 25 is very high and not representative of most of the loan applicants. 
 
 Overall, we can see that less `inq.last.6mths` aligns with lower `FICO` score requirements for the `credit.policy`. Generally, if applicants have equal to or more than four `inq.last.6mths`, then they will likely need a `FICO` score of 740 or higher to meet the `credit.policy`. On the other hand, if applicants have less than four `inq.last.6mths`, then they will likely only need a `FICO` score of 660 or higher to meet the `credit.policy`. If applicants have a `FICO` score lower than 660, then they are unlikely to meet the `credit.policy`, regardless.
 
 
-```{r}
-# create a postscript plot of tree 
-# The rpart.plot() function looks quite nice, so we may not need this
-post(creditfit, file = "credittree2.ps", title = "Classification Tree for credit.policy")
-```
-
-
-### Confusion Matrix
+## Confusion Matrix
 
 To better understand how our model performs we can construct a confusion matrix of the results. The `Fails` values will function as the positive cases for the confusion matrix we put together based on the results of the classification tree model.
 ```{r results="show"}
@@ -276,17 +276,8 @@ confusion_matrix$byClass
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
 ```
 
-FIX****************
+Let's take a closer look and put together tables to visualize the confusion matrix as well some statistics on it.
 
-Based on the Kappa statistic of `r round(confusion_matrix$overall["Kappa"], digits=2)` we would evaluate this classifier as almost perfect agreement.
-
-To add: other comments on the overall stats of the model.
-
-From the Trees.rmd file:
-The overall accuracy is `r round(confusion_matrix$overall["Accuracy"]*100, digits=2)`%. These are the same metrics of sensitivity (also known as recall rate, TP / (TP+FN) ), specificity (TN / (TN+FP) ), F1 score, and others that we used in Logistic Regression and KNN analyses. Indeed, any "classifiers" can use the confusion matrix approach as one of the evaluation tools. 
-
-
-Let's put together tables to visualize the confusion matrix as well some statistics on it.
 
 ```{r results="show"}
 # Creating the confusion matrix table
@@ -310,7 +301,7 @@ cm_table %>%
 ```
 
 ```{r results="show"}
-#Creating a table for the confusion matrix statistics
+# Creating a table for the confusion matrix statistics
 # Start by converting to a data.frame
 cm_stats <- as.data.frame(confusion_matrix$byClass) %>%
   rownames_to_column()
@@ -326,10 +317,14 @@ cm_stats %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-For certain statistics this model performs extremely well, with  near 100% specificity, precision, and positive predictive value. Negative predictive value is also very high at around 94%. 
 
-To add: further comments on the statistics of the model.
+Based on the Kappa statistic of `r round(confusion_matrix$overall["Kappa"], digits=2)` we would evaluate this classifier as almost perfect agreement.
 
+The sensitivity and specificity values indicate the test can fairly reliably detect loans that meet and fail to meet the credit policy. We can also tell that we have a favorable, high arching, ROC curve after looking at the these values along with with the AUC. 
+
+The high precision indicates the tree is very good identifying true positives, in that 99.6% of its predicted fails were right.
+
+The high kappa value of .859 suggests there is a high degree of agreement between the predictions and the actual values.
 
 
 ### ROC Curve
@@ -345,31 +340,18 @@ plot(tree_roc)
 
 ```
 
+The AUC of the ROC is `r auc(tree_roc)`, which is greater than the 0.8 threshold, so we would consider this to be a good indicator/model. We can conclude that this is overall an effective model for determining if a loan will meet the credit underwriting policy set by LendingClub.
 
-The AUC of the ROC is `r auc(tree_roc)`, which is greater than the 0.8 threshold, so we would consider this to be a good indicator/model.
 
 
-## Applying the model
-```{r results = "show", echo=FALSE}
-# We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
+# Classification Tree for Not Fully Paid
 
-loans_tree %>%
-  mutate(vector_prediction = predict(creditfit, type = "vector")) %>%
-  group_by(vector_prediction) %>%
-  summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
-  ungroup() %>%
-  rename(`Meets Predicted Credit Policy` = vector_prediction, `Percent Not Fully Paid` = percent_not_fully_paid) %>%
-  kable(align = "c") %>%
-  kable_styling(bootstrap_options = c("striped", "condensed"))
-```
-
-## Not Fully Paid
-### Preparing and Building the Tree
+## Preparing and Building the Tree
 Similar to what we did for, `credit.policy`, was also did to `not.fully.paid` and treated it as a 2-level factor for the tree model. 
 
 In this case, we are interested in the loans where the value is `TRUE `. That is, loans that were not fully paid, which are in the minority. We will rename the `TRUE` values to `Unpaid`, indicating they failed to be fully paid, and rename the `FALSE` values to `Paid`, indicating they were paid. 
 
-Our initial classification tree revealed in no chosen variables and only the single trunk node, a kappa value of 0, and a ROC curve that fit directly with the random classifier line. We interpreted this as a strong indicator that a classification tree would not be useful for `not.fully.paid`.
+Our initial classification tree did not choose any variables and had only a single trunk node, a kappa value of 0, and a ROC curve that fit directly on top of the random classifier line. We interpreted this as a strong indicator that a classification tree would not be useful for `not.fully.paid`.
 
 To confirm, we overrode the default complexity parameter in the rpart function and set it from .01 to .001. This led to the classification tree using the variables `credit.policy`, `inq.last.6mths`, `int.rate`, and `purpose`. 
 
@@ -390,25 +372,14 @@ creditfit_nfp <- rpart(not.fully.paid ~ purpose	+ int.rate + installment + log.a
 
 printcp(creditfit_nfp) # display the results 
 plotcp(creditfit_nfp) # visualize cross-validation results
-summary(creditfit_nfp) # detailed summary of splits; show these?
-
-```
-
-
-
-```{r}
-# Show these results??
 summary(creditfit_nfp) # detailed summary of splits
+
 ```
 
 
-### Visualizing the Tree
+## Visualizing the Tree
 
-We can better visualize the tree by plotting it out. We can see that the tree is not vary useful. 
-
-
-We can see the `inq.last.6mths` threshold of less than six, as well as the two thresholds of 740 and 660 or `FICO` scores. It details that of our 9578 loan sample, there are 1868 loans that failed to meet the `credit.policy` and 7710 that did. 
-
+We can better visualize this tree by plotting it out. 
 
 ```{r}
 # plot the tree and add text
@@ -417,9 +388,13 @@ rpart.plot(creditfit_nfp, uniform=TRUE, main="Classification Tree for Not Fully 
 #text(creditfit, use.n=TRUE, all=TRUE, cex=.75)
 
 ```
-Our only main takeaway from this classification tree is that most loans that met the `credit.policy` were paid. We can also speculate that loans used for `home_improvement` and `small_business` with high interest rates and a high number of `inq.last.6mths` have a higher likelihood of not getting paid, which would fit generic expectations. 
 
-### Confusion Matrix
+We can see that the tree is not vary useful. The leaf nodes do not come close to zero'ing out and are not very segregated. Overall, we can only infer from the tree that most loans that met the credit policy ended up paying the loan, and that a high number of `inq.last.6mths` and/or a high `int.rate` are yellow flags that point to a loan possibly not being fully paid, all of which are what we would expect for any general loan dataset. 
+
+We can speculate that loans used for `home_improvement` and `small_business` with high interest rates and a high number of `inq.last.6mths` have a higher likelihood of not getting paid, but this too would fit generic expectations. 
+
+
+## Confusion Matrix
 
 To better understand how our model performs we can construct a confusion matrix of the results. The `Unpaid` values will function as the positive cases for the confusion matrix we put together based on the results of the classification tree model.
 ```{r results="show"}
@@ -431,7 +406,6 @@ print('Class: ')
 confusion_matrix_nfp$byClass
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
 ```
-Based on the Kappa statistic of `r round(confusion_matrix_nfp$overall["Kappa"], digits=2)` we would evaluate this classifier as only slight agreement, which confirms our initial suspicion that the classification tree for `not.fully.paid` would not be useful. 
 
 Let's put together tables to visualize the confusion matrix as well some statistics on it.
 
@@ -473,12 +447,11 @@ cm_stats_nfp %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-For certain statistics this model performs relatively poorly, with 1.3% specificity, a negative predictive value of 64.5%, and a balanced accuracy of only 50.6%.  
+We immediately see the extremely low specificity value, which indicates the tree was terrible at detecting those that went unpaid. Combined with the low AUC indicates a less than promising ROC curve.
 
+Based on the Kappa statistic of `r round(confusion_matrix_nfp$overall["Kappa"], digits=2)` we would evaluate this classifier as only slight agreement, which confirms our initial suspicion that the classification tree for `not.fully.paid` would not be useful. 
 
-
-
-### ROC Curve
+## ROC Curve
 
 Another way that we can evaluate the performance of the model is to look at the ROC curve and the area under the curve (AUC).
 
@@ -491,24 +464,23 @@ plot(tree_roc_nfp)
 
 ```
 
-
-The AUC of the ROC is `r auc(tree_roc_nfp)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model.
+The AUC of the ROC is `r auc(tree_roc_nfp)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model. We can conclude that this is overall a poor model for determining if a loan will default.
 
 
 
 # Simple Linear Regression
 
-For the 4 combinations of variables that we identified as having a notable level of correlation (greater than 0.4 or less than -0.4), it makes sense to see if we can model these relationships with linear regression.
+From the correlation plot we see 5 combinations of variables with notable correlations (greater than 0.4 or less than -0.4) that we would like to explore further by trying to model them with simple linear regressions.
 
 
 ## Interest Rate vs FICO Score
 
 ```{r}
 # fit linear model
-linear_model <- lm(int.rate ~ fico, data=loans)
+linear_model_1 <- lm(int.rate ~ fico, data=loans)
   
 # view summary of linear model
-summary(linear_model)
+summary(linear_model_1)
 
 # scatterplot with regression line and confidence interval
 scatterplot(int.rate ~ fico, data = loans)
@@ -524,17 +496,15 @@ scatterplot(int.rate ~ fico, data = loans)
 #  theme_minimal()
 ```
 
-To Add: comments on the model
-
 
 ## Revolving Utilization Rate vs Interest Rate
 
 ```{r}
 # fit linear model
-linear_model <- lm(revol.util ~ int.rate, data=loans)
+linear_model_2 <- lm(revol.util ~ int.rate, data=loans)
   
 # view summary of linear model
-summary(linear_model)
+summary(linear_model_2)
 
 # scatterplot with regression line and confidence interval
 scatterplot(revol.util ~ int.rate, data = loans)
@@ -550,17 +520,15 @@ scatterplot(revol.util ~ int.rate, data = loans)
 #  theme_minimal()
 ```
 
-To Add: comments on the model
-
 
 ## Installment vs Natural Log of Annual Income
 
 ```{r}
 # fit linear model
-linear_model <- lm(installment ~ log.annual.inc, data=loans)
+linear_model_3 <- lm(installment ~ log.annual.inc, data=loans)
   
 # view summary of linear model
-summary(linear_model)
+summary(linear_model_3)
 
 # scatterplot with regression line and confidence interval
 scatterplot(installment ~ log.annual.inc, data = loans)
@@ -574,17 +542,15 @@ scatterplot(installment ~ log.annual.inc, data = loans)
 #  theme_minimal()
 ```
 
-To Add: comments on the model
-
 
 ## Revolving Utilization Rate vs FICO Score
 
 ```{r}
 # fit linear model
-linear_model <- lm(revol.util ~ fico, data=loans)
+linear_model_4 <- lm(revol.util ~ fico, data=loans)
   
 # view summary of linear model
-summary(linear_model)
+summary(linear_model_4)
 
 # scatterplot with regression line and confidence interval
 scatterplot(revol.util ~ fico, data = loans)
@@ -601,14 +567,14 @@ scatterplot(revol.util ~ fico, data = loans)
 ```
 
 
-Revolving Utilization Rate vs Natural Log of Revolving Balance
+## Revolving Utilization Rate vs Natural Log of Revolving Balance
 
 ```{r}
 # fit linear model
-linear_model <- lm(revol.util ~ log.revol.bal, data=loans)
+linear_model_5 <- lm(revol.util ~ log.revol.bal, data=loans)
   
 # view summary of linear model
-summary(linear_model)
+summary(linear_model_5)
 
 # scatterplot with regression line and confidence interval
 scatterplot(revol.util ~ log.revol.bal, data = loans)
@@ -623,93 +589,98 @@ scatterplot(revol.util ~ log.revol.bal, data = loans)
 #  scale_y_continuous(labels = label_percent(scale = 1)) +
 #  theme_minimal()
 ```
-From the heat-map we see that there are five significant correlations . In order to further explore that we plot 5 scatter plots with simple linear regressions. The first one is interest rate vs fico. We can see from the graph that the relation is almost linear as the linear regression line lies close to the true regression line. This is further confirmed by the adjusted r^2 value that is relatively significant at 51% and the p value at least than 0.05.
-
-The second one is revolving utility vs interest rate. We can see from the graph that the relation is not as linear as the linear regression line lies tangent to the true regression line. This is further confirmed by the adjusted r^2 value that is relatively low at 21% and the p value at least than 0.05.
-
-The third one is installment vs log.annual.inc. We can see from the graph that the relation is not as linear as the linear regression line lies tangent to the true regression line but converges as both variables increase. This is further confirmed by the adjusted r^2 value that is relatively low at 20% and the p value at least than 0.05.
-
-The fourth one is revolving utility vs fico score. We can see from the graph that the relation is not as linear as the linear regression line lies relatively loser to the true regression line in comparison to the previous two cases. This is further confirmed by the adjusted r^2 value that is relatively low at 29% and the p value at least than 0.05.
-
-In the last graph we can see that there is a strong positive relation between the two variables namely log.revol.bal and revol.util of 0.5. However,we see that since the true regression is far from linear the adjusted r^2 is relatively low at 24.85%. 
 
 
-# Logistic Regression Credit Policy
+## Evaluation of Models
 
-## Effects on Admission by purpose
+1. The first one is interest rate vs FICO score. We can see from the graph that the relation is almost linear as the linear regression line lies close to the true regression line. This is further confirmed by the adjusted r^2 value that is relatively significant at 51% and the p value at least than 0.05.
 
-To study the effects on admission by the factor purpose (credit.policy and purpose are both categorical variables), we can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
-\*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
+2. The second one is revolving utilization rate vs interest rate. We can see from the graph that the relation is not as linear as the linear regression line lies tangent to the true regression line. This is further confirmed by the adjusted r^2 value that is relatively low at 21% and the p value at least than 0.05.
+
+3. The third one is installment vs natural log of annual income. We can see from the graph that the relation is not as linear as the linear regression line lies tangent to the true regression line but converges as both variables increase. This is further confirmed by the adjusted r^2 value that is relatively low at 20% and the p value at least than 0.05.
+
+4. The fourth one is revolving utilization rate vs FICO score. We can see from the graph that the relation is not as linear as the linear regression line lies relatively loser to the true regression line in comparison to the previous two cases. This is further confirmed by the adjusted r^2 value that is relatively low at 29% and the p value at least than 0.05.
+
+5. The fifth one is revolving utilization rate vs natural log of revolving balance. We can see that the true regression is far from linear the adjusted r^2 is relatively low at 24.85%. 
+
+Overall we can conclude that simple linear regression is not an effective way to model these relationships, though the first model isn't too bad.
+
+
+
+# Logistic Regression for Credit Policy
+
+## Effects on Credit Policy by Purpose
+
+To study the effects on `credit.policy` by the factor `purpose` (`credit.policy` and `purpose` are both categorical variables), we can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.
 
 ```{r}
-credit.policypurposetable = xtabs(~ credit.policy + purpose, data = loans)
-credit.policypurposetable
+credit_policy_purpose_table <-  xtabs(~ credit.policy + purpose, data = loans)
+
+credit_policy_purpose_table %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-## feature selection
-```{r}
+
+## Feature Selection
+
+```{r results="show"}
 set.seed(7)
-# load the library
-library(mlbench)
-library(caret)
-# load the dataset
+loans_logit_credit <- loans
+
+loans_logit_credit$credit.policy = as.factor(loans_logit_credit$credit.policy)
+
 # prepare training scheme
-loans$credit.policy = as.factor(loans$credit.policy)
 control <- trainControl(method="repeatedcv", number=10, repeats=3)
+
 # train the model
-class(loans$credit.policy)
-model <- train(credit.policy~., data=loans, method="glm", preProcess="scale", trControl=control)
+logit_credit_training <- train(credit.policy~., data=loans_logit_credit, method="glm", preProcess="scale", trControl=control)
+
 # estimate variable importance
-importance <- varImp(model, scale=FALSE)
+logit_credit_importance <- varImp(logit_credit_training, scale=FALSE)
+
 # summarize importance
-print(importance)
+print(logit_credit_importance)
+
 # plot importance
-plot(importance)
+plot(logit_credit_importance)
+
 #names(getModelInfo())
 ```
 
 
-
-
 ## Logistic Regression Model
 
-
-<<<<<<< Updated upstream
 ```{r}
-loans$credit.policy <- factor(loans$credit.policy)
-str(loans)
-loans$purpose <- factor(loans$purpose)
-#str(credit.policy)
-credit.policyLogit <- glm(credit.policy ~ inq.last.6mths+fico+log.annual.inc+dti+delinq.2yrs+pub.rec+purpose , data = loans, binomial(link = "logit") )  
+logit_credit_model <- glm(credit.policy ~ inq.last.6mths+fico+log.annual.inc+dti+delinq.2yrs+pub.rec+purpose, data = loans_logit_credit, binomial(link = "logit") )  
 ```
 
 We can see the summary of the logit model here:
 
-```{r}
-summary(credit.policyLogit)
-```
-
 ```{r results='markup'}
-xkabledply(credit.policyLogit, title = "Logistic Regression :")
+summary(logit_credit_model)
+
+# nicer table for the model summary
+xkabledply(logit_credit_model, title = "Logistic Regression :")
 ```
 
-Before moving on, let us look at the model object `credit.policyLogit` a little deeper. The fitted values can be found from `credit.policyLogit$fitted.values`. And the first fitted value is `r credit.policyLogit$fitted.values[1]`. This is the probability of being credit.policyted for data point #1. Compare to the value from `predict(credit.policyLogit)` to be `r predict(credit.policyLogit)[1]`. 
+Before moving on, let us look at the model object `logit_credit_model` a little deeper. The fitted values can be found from `logit_credit_model$fitted.values`. And the first fitted value is `r logit_credit_model$fitted.values[1]`. This is the probability of  credit.policyted for data point #1. Compare to the value from `predict(logit_credit_model)` to be `r predict(logit_credit_model)[1]`. 
 
-The `predict()` function gives us the logit value. You can exponentiate to get the odds ratio p/q as `r exp(predict(credit.policyLogit)[1])`. And finally, we can find p from p/q, and indeed it is confirmed to be `r 1/(1+exp(-predict(credit.policyLogit)[1]))`.
+The `predict()` function gives us the logit value. You can exponentiate to get the odds ratio p/q as `r exp(predict(logit_credit_model)[1])`. And finally, we can find p from p/q, and indeed it is confirmed to be `r 1/(1+exp(-predict(logit_credit_model)[1]))`.
 
-The easier way to get that is simply use `predict(credit.policyLogit, type = c("response"))[1]` = `r predict(credit.policyLogit, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
+The easier way to get that is simply use `predict(logit_credit_model, type = c("response"))[1]` = `r predict(logit_credit_model, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
 
 ```{r}
-p_fitted = credit.policyLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
+logit_credit_p_fitted = logit_credit_model$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
 ```
 
 This is stored in the model as the fitted value for the probability `p` of the first data point. Since the actual data point is a 0/1 True/False value, it is not easy to directly compare them unless we use a cutoff value (default as 0.5) to convert the probability `p` to 0/1.
 
-Now, for unseen data point, we can use the `predict( )` function to find the model predicted values. But be careful of what you are getting with the `predict()` function in classification models. Let us compare the three options below. For easy comparison, let us use the same data point in the dataset as an example.
+Now, for unseen data point, we can use the `predict()` function to find the model predicted values. But be careful of what you are getting with the `predict()` function in classification models. Let us compare the three options below. For easy comparison, let us use the same data point in the dataset as an example.
 
 ```{r}
 # This gives you the predicted values of the data points inside the model.
-predict(credit.policyLogit)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
+predict(logit_credit_model)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
 ```
 
 
@@ -717,190 +688,145 @@ predict(credit.policyLogit)  # the is from the model, which gives you the value 
 
 We can easily determine the confidence intervals of each coefficient with these two slightly different ways:
 
-<<<<<<< Updated upstream
-```{r results='markup', collapse=F}
+```{r results="markup"}
 ## CIs using profiled log-likelihood
-# confint(credit.policyLogit)
-xkabledply( confint(credit.policyLogit), title = "CIs using profiled log-likelihood" )
+# confint(logit_credit_model)
+xkabledply(confint(logit_credit_model), title = "CIs using profiled log-likelihood")
+
 ## CIs using standard errors
-# confint.default(credit.policyLogit)
-xkabledply( confint.default(credit.policyLogit), title = "CIs using standard errors" )
+# confint.default(logit_credit_model)
+xkabledply(confint.default(logit_credit_model), title = "CIs using standard errors")
 ```
 
-### Model evaluation
 
-#### Confusion matrix
+## Model evaluation
 
-This is just one of the many libraries you can find the confusion matrix. It is easy to use, but not very powerful, lacking ability to choose cutoff value, and it does not give you all the metrics like accuracy, precision, recall, sensitivity, f1 score etc. Nonetheless, it's handy.
+### Confusion matrix
 
 ```{r results='markup'}
-loadPkg("regclass")
-# confusion_matrix(credit.policyLogit)
-xkabledply( confusion_matrix(credit.policyLogit), title = "Confusion matrix from Logit Model" )
-unloadPkg("regclass")
+xkabledply(confusion_matrix(logit_credit_model), title = "Confusion matrix from Logit Model" )
 ```
 
 
-#### Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC)
+### ROC and AUC
 
 Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures the true positive rate (or sensitivity) against the false positive rate (or specificity). The area-under-curve is always between 0.5 and 1. Values higher than 0.8 is considered good model fit.
 
 ```{r}
-loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
-prob=predict(credit.policyLogit, type = "response" )
-loans$prob <- NA
-loans$prob=prob
-h <- roc(credit.policy~prob, data=loans)
-auc(h) # area-under-curve prefer 0.8 or higher.
-plot(h)
-# unloadPkg("pROC")
-head(loans)
+# receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+loans_logit_credit$prediction <- predict(logit_credit_model, type = "response" )
+
+roc_logit_credit <- roc(credit.policy ~ prediction, data=loans_logit_credit)
+auc(roc_logit_credit) # area-under-curve prefer 0.8 or higher.
+
+# visualize the curve
+plot(roc_logit_credit)
 ```
 
-We have here the area-under-curve of `r auc(h)`, which is more than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is considered a good fit.
-
-#### END ##
+We have here the area-under-curve of `r auc(roc_logit_credit)`, which is more than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is considered a good fit.
 
 
-
-
-
-#### McFadden
+### McFadden
 
 McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
 
 ```{r}
-credit.policyNullLogit <- glm(credit.policy ~ 1, data = loans, family = "binomial")
-mcFadden = 1 - logLik(credit.policyLogit)/logLik(credit.policyNullLogit)
+logit_credit_null <- glm(credit.policy ~ 1, data = loans_logit_credit, family = "binomial")
+mcFadden = 1 - logLik(logit_credit_model)/logLik(logit_credit_null)
 mcFadden
 ```
 
-Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) will do the trick.
+Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) which will do the trick.
 
 ```{r}
-loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
-credit.policyLogitpr2 = pR2(credit.policyLogit)
-credit.policyLogitpr2
-unloadPkg("pscl") 
+logit_credit_pr2 = pR2(logit_credit_model)
+logit_credit_pr2
 ```
 
-With the McFadden value of `r credit.policyLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 51% of the variations in y is explained by the explanatory variables in the model.
+With the McFadden value of `r logit_credit_pr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 42% of the variation in y is explained by the explanatory variables in the model.
 
-A major weakness of the overall model is likely from the small dataset sample size of `r length(loans$credit.policy)`. We expect a much higher number of observations will increase the sensitivity of the model.
 
-#### Hosmer and Lemeshow test
+### Hosmer and Lemeshow Test
 
 The Hosmer and Lemeshow Goodness of Fit test can be used to evaluate logistic regression fit.
 
-```{r}
-loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
-```
+```{r results="markup"}
+logit_credit_hoslem <- hoslem.test(loans_logit_credit$credit.policy, fitted(logit_credit_model)) # Hosmer and Lemeshow test, a chi-squared test
 
-```{r}
-credit.policyLogitHoslem = hoslem.test(loans$credit.policy, fitted(credit.policyLogit)) # Hosmer and Lemeshow test, a chi-squared test
-```
-
-The result is shown here:
-
-```{r results='markup', collapse=F}
-credit.policyLogitHoslem
+logit_credit_hoslem
 # Have not found a good way to display it.
 ```
 
-The p-value of `r credit.policyLogitHoslem$p.value` is relatively low. This indicates the model is y a good fit, despite all the coefficients are significant.
+The p-value is `r logit_credit_hoslem$p.value` which indicates indicates the model is a good fit.
+
+
+
+# Logistic Regression for Not Fully Paid
+
+## Effects on Not Fully Paind by Purpose
+
+To study the effects on `not.fully.paid` by the factor `purpose` (`not.fully.paid` and `purpose` are both categorical variables), we can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.
 
 ```{r}
-# Removing the added prob variable
-loans <- loans %>%
-  select(-prob)
+nfp_purpose_table = xtabs(~ not.fully.paid + purpose, data = loans)
+
+nfp_purpose_table %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
 
-## Applying the model
-```{r results = "show", echo=FALSE}
-# We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
-loans %>%
-  mutate(vector_prediction = round(predict(credit.policyLogit, type = "response"))) %>%
-  group_by(vector_prediction) %>%
-  summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
-  ungroup() %>%
-  rename(`Meets Predicted Credit Policy` = vector_prediction, `Percent Not Fully Paid` = percent_not_fully_paid) %>%
-  kable(align = "c") %>%
-  kable_styling(bootstrap_options = c("striped", "condensed"))
-```
+## Feature Selection
 
-
-# Logistic Regression Not Fully Paid
-
-
-## Effects on not.fully paid by purpose
-
-To study the effects on admission by the factor purpose (not.fully.paid and purpose are both categorical variables), wee can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.\
-\*A contingency table, sometimes called a two-way frequency table, is a tabular mechanism with at least two rows and two columns used in statistics to present categorical data in terms of frequency counts.
-
-<<<<<<< Updated upstream
-```{r}
-not.fully.paidpurposetable = xtabs(~ not.fully.paid + purpose, data = loans)
-not.fully.paidpurposetable
-```
-## feature selection
 ```{r}
 set.seed(7)
-# load the library
-library(mlbench)
-library(caret)
-loans$not.fully.paid = as.factor(loans$not.fully.paid)
-# load the dataset
+loans_logit_nfp <- loans
+
+loans_logit_nfp$not.fully.paid = as.factor(loans_logit_nfp$not.fully.paid)
+
 # prepare training scheme
 control <- trainControl(method="repeatedcv", number=10, repeats=3)
+
 # train the model
-class(loans$not.fully.paid)
-model <- train(not.fully.paid~., data=loans, method="glm", preProcess="scale", trControl=control)
+logit_nfp_training <- train(not.fully.paid~., data=loans_logit_nfp, method="glm", preProcess="scale", trControl=control)
+
 # estimate variable importance
-importance <- varImp(model, scale=FALSE)
+logit_nfp_importance <- varImp(logit_nfp_training, scale=FALSE)
+
 # summarize importance
-print(importance)
+print(logit_nfp_importance)
+
 # plot importance
-plot(importance)
+plot(logit_nfp_importance)
+
 #names(getModelInfo())
 ```
 
 
-
-
-
-
 ## Logistic Regression Model
 
-
 ```{r}
-loans$not.fully.paid <- factor(loans$not.fully.paid)
-str(loans)
-loans$purpose <- factor(loans$purpose)
-#str(not.fully.paid)
-not.fully.paidLogit <- glm(not.fully.paid ~., data = loans, binomial(link = "logit") )  
+logit_nfp_model <- glm(not.fully.paid ~., data = loans_logit_nfp, binomial(link = "logit") )  
 ```
 
 We can see the summary of the logit model here:
 
-```{r}
-summary(not.fully.paidLogit)
-```
-
 ```{r results='markup'}
-xkabledply(not.fully.paidLogit, title = "Logistic Regression :")
+summary(logit_nfp_model)
+
+# nicer table for the model summary
+xkabledply(logit_nfp_model, title = "Logistic Regression :")
 ```
 
-Before moving on, let us look at the model object `not.fully.paidLogit` a little deeper. The fitted values can be found from `not.fully.paidLogit$fitted.values`. And the first fitted value is `r not.fully.paidLogit$fitted.values[1]`. This is the probability of being not.fully.paid for data point #1. Compare to the value from `predict(not.fully.paidLogit)` to be `r predict(not.fully.paidLogit)[1]`. 
+Before moving on, let us look at the model object `logit_nfp_model` a little deeper. The fitted values can be found from `logit_nfp_model$fitted.values`. And the first fitted value is `r logit_nfp_model$fitted.values[1]`. This is the probability of being not.fully.paid for data point #1. Compare to the value from `predict(logit_nfp_model)` to be `r predict(logit_nfp_model)[1]`. 
 
-The `predict()` function gives us the logit value. You can exponentiate to get the odds ratio p/q as `r exp(predict(not.fully.paidLogit)[1])`. And finally, we can find p from p/q, and indeed it is confirmed to be `r 1/(1+exp(-predict(not.fully.paidLogit)[1]))`.
+The `predict()` function gives us the logit value. You can exponentiate to get the odds ratio p/q as `r exp(predict(logit_nfp_model)[1])`. And finally, we can find p from p/q, and indeed it is confirmed to be `r 1/(1+exp(-predict(logit_nfp_model)[1]))`.
 
-The easier way to get that is simply use `predict(not.fully.paidLogit, type = c("response"))[1]` = `r predict(not.fully.paidLogit, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
+The easier way to get that is simply use `predict(logit_nfp_model, type = c("response"))[1]` = `r predict(logit_nfp_model, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
 
-<<<<<<< Updated upstream
 ```{r}
-p_fitted = not.fully.paidLogit$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
-p_fitted
+logit_nfp_p_fitted = logit_nfp_model$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
+logit_nfp_p_fitted
 ```
 
 This is stored in the model as the fitted value for the probability `p` of the first data point. Since the actual data point is a 0/1 True/False value, it is not easy to directly compare them unless we use a cutoff value (default as 0.5) to convert the probability `p` to 0/1.
@@ -909,345 +835,230 @@ Now, for unseen data point, we can use the `predict( )` function to find the mod
 
 ```{r}
 # This gives you the predicted values of the data points inside the model.
-predict(not.fully.paidLogit)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
+predict(logit_nfp_model)  # the is from the model, which gives you the value for logit(p) or ln(p/q) 
 ```
 
 
 ### Confidence Intervals
 
-We can easily determin the confidence intervals of each coefficient with these two slightly different ways:
+We can easily determine the confidence intervals of each coefficient with these two slightly different ways:
 
-```{r ConfInt, results='markup', collapse=F}
+```{r results="markup"}
 ## CIs using profiled log-likelihood
-# confint(not.fully.paidLogit)
-xkabledply( confint(not.fully.paidLogit), title = "CIs using profiled log-likelihood" )
+# confint(logit_nfp_model)
+xkabledply(confint(logit_nfp_model), title = "CIs using profiled log-likelihood")
+
 ## CIs using standard errors
-# confint.default(not.fully.paidLogit)
-xkabledply( confint.default(not.fully.paidLogit), title = "CIs using standard errors" )
-```
-
-### Model evaluation
-
-#### Confusion matrix
-
-This is just one of the many libraries you can find the confusion matrix. It is easy to use, but not very powerful, lacking ability to choose cutoff value, and it does not give you all the metrics like accuracy, precision, recall, sensitivity, f1 score etc. Nonetheless, it's handy.
-
-```{r x, results='markup'}
-loadPkg("regclass")
-# confusion_matrix(not.fully.paidLogit)
-xkabledply( confusion_matrix(not.fully.paidLogit), title = "Confusion matrix from Logit Model" )
-unloadPkg("regclass")
+# confint.default(logit_nfp_model)
+xkabledply(confint.default(logit_nfp_model), title = "CIs using standard errors")
 ```
 
 
-#### Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC)
+## Model evaluation
+
+### Confusion matrix
+
+```{r results='markup'}
+xkabledply(confusion_matrix(logit_nfp_model), title = "Confusion matrix from Logit Model" )
+```
+
+
+### ROC and AUC
 
 Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures the true positive rate (or sensitivity) against the false positive rate (or specificity). The area-under-curve is always between 0.5 and 1. Values higher than 0.8 is considered good model fit.
 
 ```{r roc_auc}
-loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
-prob=predict(not.fully.paidLogit, type = "response" )
-loans$prob <- NA
-loans$prob=prob
-h <- roc(not.fully.paid~prob, data=loans)
-auc(h) # area-under-curve prefer 0.8 or higher.
-plot(h)
-# unloadPkg("pROC")
-head(loans)
+# receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+loans_logit_nfp$prediction <- predict(logit_nfp_model, type = "response" )
+
+roc_logit_nfp <- roc(not.fully.paid ~ prediction, data=loans_logit_nfp)
+auc(roc_logit_nfp) # area-under-curve prefer 0.8 or higher.
+
+# visualize the curve
+plot(roc_logit_nfp)
 ```
 
-We have here the area-under-curve of `r auc(h)`, which is less than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is not considered a good fit.
-
-#### END ##
+We have here the area-under-curve of `r auc(roc_logit_nfp)`, which is less than 0.8. This test also agrees with the Hosmer and Lemeshow test that the model is not considered a good fit.
 
 
-
-
-
-#### McFadden
+### McFadden
 
 McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
 
 ```{r McFadden_direct}
-not.fully.paidNullLogit <- glm(not.fully.paid ~ 1, data = loans, family = "binomial")
-mcFadden = 1 - logLik(not.fully.paidLogit)/logLik(not.fully.paidNullLogit)
+logit_nfp_null <- glm(not.fully.paid ~ 1, data = loans_logit_nfp, family = "binomial")
+mcFadden = 1 - logLik(logit_nfp_model)/logLik(logit_nfp_null)
 mcFadden
 ```
 
-Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) will do the trick.
+Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) which will do the trick.
 
 ```{r McFadden}
-loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
-not.fully.paidLogitpr2 = pR2(not.fully.paidLogit)
-not.fully.paidLogitpr2
-unloadPkg("pscl") 
+logit_nfp_pr2 = pR2(logit_nfp_model)
+logit_nfp_pr2
 ```
 
-With the McFadden value of `r not.fully.paidLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 8% of the variations in y is explained by the explanatory variables in the model.
+With the McFadden value of `r logit_nfp_pr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 8% of the variation in y is explained by the explanatory variables in the model.
 
-A major weakness of the overall model is likely from the small dataset sample size of `r length(loans$not.fully.paid)`. We expect a much higher number of observations will increase the sensitivity of the model.
 
-#### Hosmer and Lemeshow test
+### Hosmer and Lemeshow test
 
 The Hosmer and Lemeshow Goodness of Fit test can be used to evaluate logistic regression fit.
 
-```{r HosmerLemeshow}
-loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
-```
+```{r results="markup"}
+logit_nfp_hoslem = hoslem.test(loans_logit_nfp$not.fully.paid, fitted(logit_nfp_model)) # Hosmer and Lemeshow test, a chi-squared test
 
-```{r}
-not.fully.paidLogitHoslem = hoslem.test(loans$not.fully.paid, fitted(not.fully.paidLogit)) # Hosmer and Lemeshow test, a chi-squared test
-```
-
-The result is shown here:
-
-```{r HosmerLemeshowRes, results='markup', collapse=F}
-not.fully.paidLogitHoslem
+logit_nfp_hoslem
 # Have not found a good way to display it.
 ```
 
-The p-value of `r not.fully.paidLogitHoslem$p.value` is relatively high. This indicates the model is not really a good fit, despite all the coefficients are significant.
-
-```{r}
-# Removing the added prob variable
-loans <- loans %>%
-  select(-prob)
-```
-
-# Model Application
-
-```{r}
-
-```
+The p-value of `r logit_nfp_hoslem$p.value` is relatively high. This indicates the model is not really a good fit, despite all the coefficients are significant.
 
 
 
+# Multiple Linear Regression for Interest Rate
 
-
-
-
-
-# Multiple Linear Regression
-
+## Feature Selection
 
 ```{r}
 set.seed(7)
-# load the library
-library(mlbench)
-library(caret)
-# load the dataset
+loans_mlr_int <- loans
+
 # prepare training scheme
 control <- trainControl(method="repeatedcv", number=10, repeats=3)
+
 # train the model
-class(loans$not.fully.paid)
-model <- train(int.rate~., data=loans, method="lm", preProcess="scale", trControl=control)
+mlr_int_training <- train(int.rate~., data=loans_mlr_int, method="lm", preProcess="scale", trControl=control)
+
 # estimate variable importance
-importance <- varImp(model, scale=FALSE)
+mlr_int_importance <- varImp(mlr_int_training, scale=FALSE)
+
 # summarize importance
-print(importance)
+print(mlr_int_importance)
+
 # plot importance
-plot(importance)
+plot(mlr_int_importance)
+
 #names(getModelInfo())
 ```
 
 
+## Multiple Linear Regression Model
+
 ```{r}
-model <- lm(int.rate ~ fico+installment+purpose+dti+inq.last.6mths+credit.policy+log.annual.inc, data = loans)
-summary(model)
+mlr_int_model <- lm(int.rate ~ fico+installment+purpose+dti+inq.last.6mths+credit.policy+log.annual.inc, data = loans_mlr_int)
+summary(mlr_int_model)
 ```
 
 ```{r}
-model$coefficients
-model$call
+mlr_int_model$coefficients
+mlr_int_model$call
 ```
 
 ```{r results='markup'}
-coef(model)
-confint(model)
+coef(mlr_int_model)
+confint(mlr_int_model)
 ```
+
 ```{r}
-library("broom")
+mlr_int_model_tidy <- tidy(mlr_int_model)
+mlr_int_model_tidy
 
-tidyfinal <-  tidy(model)
-tidyfinal
-
-Model_Summary <- augment(model)
-str(Model_Summary)
-head(Model_Summary)
+mlr_int_model_summary <- augment(mlr_int_model)
+str(mlr_int_model_summary)
+head(mlr_int_model_summary)
 ```
 
 ```{r}
 par(mfrow=c(2,2))
-plot(model)
-```
-```{r}
-vif(model)
+plot(mlr_int_model)
 ```
 
 ```{r}
-lmtest::bptest(model)
+vif(mlr_int_model)
 ```
 
 ```{r}
-car::ncvTest(model)
+lmtest::bptest(mlr_int_model)
 ```
+
 ```{r}
-distBCMod <- caret::BoxCoxTrans(loans$int.rate)
+ncvTest(mlr_int_model)
+```
+
+```{r}
+distBCMod <- BoxCoxTrans(loans_mlr_int$int.rate)
 print(distBCMod)
-
 ```
 
 ```{r}
-loans <- cbind(loans, dist_new=predict(distBCMod, loans$int.rate)) 
-head(loans) 
+loans_mlr_int <- cbind(loans_mlr_int, dist_new=predict(distBCMod, loans_mlr_int$int.rate)) 
+head(loans_mlr_int)
 ```
+
 ```{r}
-mod1 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans)
-summary(mod1)
-lmtest::bptest(mod1)
+mlr_int_model_2 <- lm(dist_new ~ fico+installment+purpose+revol.util+log.revol.bal+credit.policy+log.annual.inc, data=loans_mlr_int)
+summary(mlr_int_model_2)
+lmtest::bptest(mlr_int_model_2)
 ```
 
 ```{r}
 par(mfrow=c(2,2))
-plot(mod1)
-```
-
-
-
-
-# LASSO Regression
-
-```{r,results='markup'}
-#install.packages("glmnet")
-#install.packages('caret')
-#install.packages('vip')
-
-library(glmnet) # Library containing Lasso Regression operator
-library(caret) # Library to split the Data to Test and Train sets
-#library(fastDummies)
-library(vip)
-
-#Importing the Data 
-data=read.csv('without na.csv')
-
-#Removing NaN values
-
-data=na.omit(data)
-
-
-```
-
-
-```{r}
-# glmnet library can't handle factor variable so the variables have to be converted to dummy variables
-data$credit.policy.T <- ifelse(data$credit.policy == TRUE, 1, 0)
-data$credit.policy.F <- ifelse(data$credit.policy == FALSE, 1, 0)
-data$has.delinq.2yrs.T <- ifelse(data$has.delinq.2yrs == TRUE, 1, 0)
-data$has.delinq.2yrs.F <- ifelse(data$has.delinq.2yrs == FALSE, 1, 0)
-data$has.revol.bal.T <- ifelse(data$has.revol.bal == TRUE, 1, 0)
-data$has.revol.bal.F <- ifelse(data$has.revol.bal == FALSE, 1, 0)
-data$has.pub.rec.T <- ifelse(data$has.pub.rec == TRUE, 1, 0)
-data$has.pub.rec.F <- ifelse(data$has.pub.rec == FALSE, 1, 0)
-data$has.revol.bal.T <- ifelse(data$has.revol.bal == TRUE, 1, 0)
-data$has.revol.bal.F <- ifelse(data$has.revol.bal == FALSE, 1, 0)
-data$not.fully.paid.T<- ifelse(data$not.fully.paid == TRUE, 1, 0)
-data$not.fully.paid.F<- ifelse(data$not.fully.paid == FALSE, 1, 0)
-```
-
-The below Dataframe shows the structure of the data, in which the categorical variables are converted to dummy variables.
-```{r,results='markup'}
-str(data)
-```
-
-
-
-The original categorical variables were dropped by keeping the dummy variables and used it for training and testing.
-The predictor dataframe included all the variables except the interest rate, as interest rate is the response.
-```{r,results='markup'}
-# Extracting the values of Y
-Y=data$int.rate 
-
-# Extracting the values of X
-X=subset(data,select=-c(purpose,int.rate,credit.policy,not.fully.paid,has.delinq.2yrs,has.pub.rec,has.revol.bal,log.revol.bal,X,revol.util))
-
-str(X)
+plot(mlr_int_model_2)
 ```
 
 
 
 
 
+# Model Application
 
-The entire data regressor and response data was split in to 70% and 30% for training and testing purpose.
 
-```{r,results='markup'}
-# Partition and create the index matrix of selected values
-index=  createDataPartition(data$int.rate, p=0.7, list=FALSE, times=1)
+In our EDA we took a look at loans that meet the credit underwriting criteria vs the borrower not fully paying. Based on the `credit.policy` and `not.fully.paid` variables, we calculated the percentage of borrowers who did not fully pay based on if they met the credit underwriting criteria.
 
-# Creating Test and Training Data in the ratio of 70% and 30%
-dat_train=as.matrix(X[index,])
-dat_test=as.matrix(X[-index,])
-#train_datx=(X[index,])
-train_daty=as.matrix(Y[index])
-#test_datx=as.data.frame(X[-index,])
-test_daty=as.matrix(Y[-index])
+```{r results = "show", echo=FALSE}
+# We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
+loans %>%
+  group_by(credit.policy) %>%
+  summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
+  ungroup() %>%
+  rename(`Meets Credit Policy` = credit.policy, `Percent Not Fully Paid` = percent_not_fully_paid) %>%
+  kable(align = "c") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+```
+  
+From this we saw that about 13.2% of borrowers who met the credit underwriting criteria did not fully pay, while for the borrowers who did not meet the credit underwriting criteria about 27.8% did not fully pay. 
+
+Since our models for `credit.policy` worked well, we decided to try the same thing using the predicted `credit.policy` from these models. Let's start with the decision tree model:
+
+```{r results = "show", echo=FALSE}
+# We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
+loans_tree %>%
+  mutate(vector_prediction = predict(creditfit, type = "vector")) %>%
+  group_by(vector_prediction) %>%
+  summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
+  ungroup() %>%
+  rename(`Meets Predicted Credit Policy` = vector_prediction, `Percent Not Fully Paid` = percent_not_fully_paid) %>%
+  kable(align = "c") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-To run the LASSO Regression the library glmnet was used and the solver cv.glmnet was used.
+Now let's try the logistic regression model:
 
-
-```{r,results='markup'}
-# Fitting Lasso 
-alpha1.fit=cv.glmnet(dat_train,train_daty,alpha=1,type.measure = 'mse',family='gaussian')
+```{r results = "show", echo=FALSE}
+# We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
+loans %>%
+  mutate(vector_prediction = round(predict(logit_credit_model, type = "response"))) %>%
+  group_by(vector_prediction) %>%
+  summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
+  ungroup() %>%
+  rename(`Meets Predicted Credit Policy` = vector_prediction, `Percent Not Fully Paid` = percent_not_fully_paid) %>%
+  kable(align = "c") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-
-The cv.glmnet performs the 10 fold cross validation on our training data and picks the  best lambda value based on least mean square cross validation error criteria.
-For our case, the lambda is :
-```{r,results='markup'}
-# Best Lambda
-best_lambda <- alpha1.fit$lambda.min
-best_lambda
-```
-
-
-The below shows the shrunk co-efficients obtained from the model. The unimportant co-efficients goes to zero. The dots next to the co-efficient names represent the shrinkage of the unimportant variables to zero.
-```{r,results='markup'}
-# Co-efficients
-coef(alpha1.fit)
-```
+We can see that the results using our model predictions are about the same as LendingClub's actual credit underwriting policy. That is to say, if we decided who should get a loan using our models, for this data our models would perform about as well as LendingClub's credit underwriting policy in terms of trying to avoid giving loans that will end up defaulting.
 
 
 
-The obtained model is used to predict the interest rate using the reserved 30% testing data and the Mean Squared Error (MSE) & R-squared value are tabulated below.
-```{r,results='markup'}
-# Using the model to predict the interest rate using the test data
-y_predicted <- predict(alpha1.fit, s = best_lambda, newx = dat_test)
-```
-
-The MSE:
-```{r,results='markup'}
-# Calculating the mean squared errors
-mse=mean((y_predicted - test_daty)^2)
-mse
-```
-
-The R-squared value
-
-```{r,results='markup'}
-# R squared
-# Calculating the total sum of squares(sst)
-sst <- sum((test_daty - mean(test_daty))^2)
-# Calculating the sum of squared errors (sse)
-sse <- sum((y_predicted - test_daty)^2)
-rsq=1-(sse/sst)
-rsq
-```
-
-
-The graph of Importance of variables to predict the interest rates. In other words, these predictors play major role in predicting the interest rates.
-```{r}
-# Plotting the variable importance graph
-(vip(alpha1.fit))
-```
 
