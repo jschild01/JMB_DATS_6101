@@ -28,12 +28,8 @@ library(ezids) # We will use functions form this package to get nicer looking re
 library(tidyverse) # We need this package for data manipulation, piping, and graphing
 library(corrplot) # We will need this package to plot the correlation matrix
 library(scales) # This package will help us when labeling the scatter plots
-# library(gridExtra) # For additional table and image functionality
-# library(expss)
-library(knitr)
-library(kableExtra)
-# library(broom)
-# library(purrr)
+library(knitr) # For features in RMarkdown
+library(kableExtra) # For better kable tables
 library(rpart) # For the classification tree model
 library(caret) # For the classification tree model
 set.seed(1) # For the classification tree model
@@ -45,6 +41,8 @@ library(regclass) # for the logistic regression
 library(ResourceSelection) # use the hoslem.test() for logit model evaluation
 library(pscl) # The pR2() function calculates McFadden statistics for logit model evaluaiton
 library(broom) # For tidying models
+library(glmnet) # Library containing Lasso Regression operator
+library(vip) # For lasso regression
 
 # Read in the data from the working directory
 loans <- read_csv("loan_data.csv")
@@ -125,11 +123,15 @@ loans_correlation_matrix_new <- loans %>%
 corrplot.mixed(loans_correlation_matrix_new, tl.pos = "lt")
 ```
 
-Some notable observations of this:
+Some notable observations of this:  
 1. `has.delinq.2yrs` doesn't have any strong correlations, and the 2 potentially useful ones (`int.rate` and `fico`) are almost exactly the same as `delinq.2yrs`.
+
 2. Similarly, `has.pub.rec` doesn't have any strong correlations, and the 2 potentially useful ones (`int.rate` and `fico`) are   the same as `pub.rec`.
-3. `log.revol.bal` has a stronger correlation with `dti` and a much stronger correlation with `revol.util` compared to `revol.bal`.
-4. `log.revol.bal` has a weaker correlation with `credit.policy` compared to `revol.bal`.
+
+3. `log.revol.bal` has a stronger correlation with `dti` and a much stronger correlation with `revol.util` compared to `revol.bal`. 
+
+4. `log.revol.bal` has a weaker correlation with `credit.policy` compared to `revol.bal`. 
+
 5. `has.revol.bal` does not have a significant correlation with anything (`log.revol.bal` excepted) except `revol.util`, where the correlation is weaker than that of `log.revol.bal`.
 
 
@@ -190,11 +192,6 @@ loans %>%
   labs(title = "Q-Q Plots of Numeric Variables", x = "Theoretical", y = "Sample") +
   theme_minimal()
 ```
-
-
-# Models Chosen
-
-
 
 
 
@@ -613,7 +610,7 @@ Overall we can conclude that simple linear regression is not an effective way to
 
 To study the effects on `credit.policy` by the factor `purpose` (`credit.policy` and `purpose` are both categorical variables), we can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.
 
-```{r}
+```{r results="show"}
 credit_policy_purpose_table <-  xtabs(~ credit.policy + purpose, data = loans)
 
 credit_policy_purpose_table %>%
@@ -644,8 +641,6 @@ print(logit_credit_importance)
 
 # plot importance
 plot(logit_credit_importance)
-
-#names(getModelInfo())
 ```
 
 
@@ -671,7 +666,7 @@ The `predict()` function gives us the logit value. You can exponentiate to get t
 The easier way to get that is simply use `predict(logit_credit_model, type = c("response"))[1]` = `r predict(logit_credit_model, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
 
 ```{r}
-logit_credit_p_fitted = logit_credit_model$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
+logit_credit_p_fitted <- logit_credit_model$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
 ```
 
 This is stored in the model as the fitted value for the probability `p` of the first data point. Since the actual data point is a 0/1 True/False value, it is not easy to directly compare them unless we use a cutoff value (default as 0.5) to convert the probability `p` to 0/1.
@@ -730,7 +725,7 @@ We have here the area-under-curve of `r auc(roc_logit_credit)`, which is more th
 
 McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
 
-```{r}
+```{r results="show"}
 logit_credit_null <- glm(credit.policy ~ 1, data = loans_logit_credit, family = "binomial")
 mcFadden = 1 - logLik(logit_credit_model)/logLik(logit_credit_null)
 mcFadden
@@ -738,7 +733,7 @@ mcFadden
 
 Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) which will do the trick.
 
-```{r}
+```{r results="show"}
 logit_credit_pr2 = pR2(logit_credit_model)
 logit_credit_pr2
 ```
@@ -767,7 +762,7 @@ The p-value is `r logit_credit_hoslem$p.value` which indicates indicates the mod
 
 To study the effects on `not.fully.paid` by the factor `purpose` (`not.fully.paid` and `purpose` are both categorical variables), we can create two-way contingency table of the outcome and predictors, and make sure there are no cells of zero frequencies.
 
-```{r}
+```{r results="show"}
 nfp_purpose_table = xtabs(~ not.fully.paid + purpose, data = loans)
 
 nfp_purpose_table %>%
@@ -798,8 +793,6 @@ print(logit_nfp_importance)
 
 # plot importance
 plot(logit_nfp_importance)
-
-#names(getModelInfo())
 ```
 
 
@@ -825,7 +818,7 @@ The `predict()` function gives us the logit value. You can exponentiate to get t
 The easier way to get that is simply use `predict(logit_nfp_model, type = c("response"))[1]` = `r predict(logit_nfp_model, type = "response" )[1]`. The `predict()` function will also allow you to find model prediction with unseen/untrained data points where `fitted.values` do not give.
 
 ```{r}
-logit_nfp_p_fitted = logit_nfp_model$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
+logit_nfp_p_fitted <- logit_nfp_model$fitted.values[1] # this is the model predicated value p-hat for the first data row (not the actual data point p)  
 logit_nfp_p_fitted
 ```
 
@@ -867,7 +860,7 @@ xkabledply(confusion_matrix(logit_nfp_model), title = "Confusion matrix from Log
 
 Receiver-Operator-Characteristic (ROC) curve and Area-Under-Curve (AUC) measures the true positive rate (or sensitivity) against the false positive rate (or specificity). The area-under-curve is always between 0.5 and 1. Values higher than 0.8 is considered good model fit.
 
-```{r roc_auc}
+```{r}
 # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
 loans_logit_nfp$prediction <- predict(logit_nfp_model, type = "response" )
 
@@ -885,7 +878,7 @@ We have here the area-under-curve of `r auc(roc_logit_nfp)`, which is less than 
 
 McFadden is another evaluation tool we can use on logit regressions. This is part of what is called pseudo-R-squared values for evaluation tests. We can calculate the value directly from its definition if we so choose to.
 
-```{r McFadden_direct}
+```{r results="show"}
 logit_nfp_null <- glm(not.fully.paid ~ 1, data = loans_logit_nfp, family = "binomial")
 mcFadden = 1 - logLik(logit_nfp_model)/logLik(logit_nfp_null)
 mcFadden
@@ -893,7 +886,7 @@ mcFadden
 
 Or we can use other libraries. The `pscl` (Political Science Computational Lab) library has the function `pR2()` (pseudo-$R^2$) which will do the trick.
 
-```{r McFadden}
+```{r results="show"}
 logit_nfp_pr2 = pR2(logit_nfp_model)
 logit_nfp_pr2
 ```
@@ -1009,12 +1002,133 @@ plot(mlr_int_model_2)
 
 
 
+# LASSO Regression
+
+We decided to try LASSO regression as well to see if we could get a better model with this method.
+
+```{r results="show"}
+loans_lasso <- loans
+
+# glmnet library can't handle factor variable so the variables have to be converted to dummy variables
+loans_lasso$credit.policy.T <- ifelse(loans_lasso$credit.policy == TRUE, 1, 0)
+loans_lasso$credit.policy.F <- ifelse(loans_lasso$credit.policy == FALSE, 1, 0)
+loans_lasso$has.delinq.2yrs.T <- ifelse(loans_lasso$has.delinq.2yrs == TRUE, 1, 0)
+loans_lasso$has.delinq.2yrs.F <- ifelse(loans_lasso$has.delinq.2yrs == FALSE, 1, 0)
+loans_lasso$has.revol.bal.T <- ifelse(loans_lasso$has.revol.bal == TRUE, 1, 0)
+loans_lasso$has.revol.bal.F <- ifelse(loans_lasso$has.revol.bal == FALSE, 1, 0)
+loans_lasso$has.pub.rec.T <- ifelse(loans_lasso$has.pub.rec == TRUE, 1, 0)
+loans_lasso$has.pub.rec.F <- ifelse(loans_lasso$has.pub.rec == FALSE, 1, 0)
+loans_lasso$has.revol.bal.T <- ifelse(loans_lasso$has.revol.bal == TRUE, 1, 0)
+loans_lasso$has.revol.bal.F <- ifelse(loans_lasso$has.revol.bal == FALSE, 1, 0)
+loans_lasso$not.fully.paid.T<- ifelse(loans_lasso$not.fully.paid == TRUE, 1, 0)
+loans_lasso$not.fully.paid.F<- ifelse(loans_lasso$not.fully.paid == FALSE, 1, 0)
+
+# The below dataframe shows the structure of the data, in which the categorical variables are converted to dummy variables.
+str(loans_lasso)
+```
+
+
+The original categorical variables were dropped by keeping the dummy variables and using it for training and testing.
+The predictor dataframe included all the variables except the interest rate, as interest rate is the response.
+
+```{r results='markup'}
+# Extracting the values of Y
+lasso_y <- loans_lasso$int.rate 
+
+# Extracting the values of X
+# lasso_x <- loans_lasso %>%
+#   select(purpose,int.rate,credit.policy,not.fully.paid,has.delinq.2yrs,has.pub.rec,has.revol.bal,log.revol.bal,X,revol.util)
+
+lasso_x <- subset(loans_lasso, select = -c(purpose,int.rate,credit.policy,not.fully.paid,has.delinq.2yrs,has.pub.rec,has.revol.bal,log.revol.bal,revol.util))
+
+str(lasso_x)
+```
+
+
+The entire data regressor and response data was split in to 70% and 30% for training and testing purpose.
+
+```{r results='markup'}
+# Partition and create the index matrix of selected values
+lasso_index <- createDataPartition(loans_lasso$int.rate, p=0.7, list=FALSE, times=1)
+
+# Creating Test and Training Data in the ratio of 70% and 30%
+lasso_train_x <- as.matrix(lasso_x[lasso_index,])
+lasso_test_x <- as.matrix(lasso_x[-lasso_index,])
+#train_datx=(lasso_x[index,])
+lasso_train_y <- as.matrix(lasso_y[lasso_index])
+#test_datx=as.data.frame(lasso_x[-index,])
+lasso_test_y <- as.matrix(lasso_y[-lasso_index])
+```
+
+
+To run the LASSO Regression the library glmnet was used and the solver cv.glmnet was used.
+
+```{r results='markup'}
+# Fitting Lasso 
+lasso_alpha1_fit <- cv.glmnet(lasso_train_x, lasso_train_y, alpha=1, type.measure = 'mse', family='gaussian')
+```
+
+
+The `cv.glmnet()` function performs the 10 fold cross validation on our training data and picks the best lambda value based on least mean square cross validation error criteria.
+For our case, the lambda is `r lasso_alpha1_fit$lambda.min`.
+
+```{r results='markup'}
+# Best Lambda
+lasso_best_lambda <- lasso_alpha1_fit$lambda.min
+lasso_best_lambda
+```
+
+
+The below shows the shrunk coefficients obtained from the model. The unimportant coefficients go to zero. The dots next to the coefficient names represent the shrinkage of the unimportant variables to zero.
+
+```{r results='markup'}
+# Coefficients
+coef(lasso_alpha1_fit)
+```
+
+
+The obtained model is used to predict the interest rate using the reserved 30% testing data and the Mean Squared Error (MSE) & R-squared value are tabulated below.
+
+```{r results='markup'}
+# Using the model to predict the interest rate using the test data
+lasso_y_predicted <- predict(lasso_alpha1_fit, s = lasso_best_lambda, newx = lasso_test_x)
+```
+
+
+The MSE:
+
+```{r results='markup'}
+# Calculating the mean squared errors
+lasso_mse <- mean((lasso_y_predicted - lasso_test_y)^2)
+lasso_mse
+```
+
+
+The R-squared value
+
+```{r results='markup'}
+# R squared
+# Calculating the total sum of squares(sst)
+lasso_sst <- sum((lasso_test_y - mean(lasso_test_y))^2)
+# Calculating the sum of squared errors (sse)
+lasso_sse <- sum((lasso_y_predicted - lasso_test_y)^2)
+lasso_rsq <- 1-(lasso_sse/lasso_sst)
+lasso_rsq
+```
+
+
+The graph of Importance of variables to predict the interest rates. In other words, these predictors play major role in predicting the interest rates.
+
+```{r}
+# Plotting the variable importance graph
+vip(lasso_alpha1_fit)
+```
+
 
 
 # Model Application
 
-
-In our EDA we took a look at loans that meet the credit underwriting criteria vs the borrower not fully paying. Based on the `credit.policy` and `not.fully.paid` variables, we calculated the percentage of borrowers who did not fully pay based on if they met the credit underwriting criteria.
+In our EDA we looked at loans that meet the credit underwriting criteria vs the borrower not fully paying. Based on the `credit.policy` and `not.fully.paid` variables, we calculated the percentage of borrowers who did not fully pay based on if they met the credit underwriting criteria.
 
 ```{r results = "show", echo=FALSE}
 # We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
@@ -1057,8 +1171,6 @@ loans %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-We can see that the results using our model predictions are about the same as LendingClub's actual credit underwriting policy. That is to say, if we decided who should get a loan using our models, for this data our models would perform about as well as LendingClub's credit underwriting policy in terms of trying to avoid giving loans that will end up defaulting.
-
-
+We can see that the results from using our model predictions are about the same as LendingClub's actual credit underwriting policy. That is to say, if we decided who should get a loan using our models, for this data our models would perform about as well as LendingClub's credit underwriting policy in terms of trying to avoid giving loans that will end up defaulting.
 
 
