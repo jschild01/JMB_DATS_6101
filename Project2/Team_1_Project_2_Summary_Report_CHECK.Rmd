@@ -936,6 +936,8 @@ Since one of our variables of intrest, `credit.policy` is a logical, we can trea
 For this variable we are interested in the loans where the value is `FALSE`. That is, loans that do not meet the credit underwriting criteria, and therefore are more at risk of defaulting. These loans are in the minority. We will rename the `FALSE` values to `Fail`, indicating that the loan fails to meet the underwriting criteria, and rename the `TRUE` values to `Meets`, indicating that the loan meets the underwriting criteria. 
 
 ```{r results="show", fig.dim=c(6,4)}
+set.seed(1)
+
 # Since we are renaming some values let's make a separate dataset for this model
 loans_tree <- loans
 
@@ -1082,6 +1084,8 @@ Our initial classification tree for `not.fully.paid` did not choose any variable
 To confirm, we overrode the default complexity parameter in the rpart function and set it from .01 to .001. 
 
 ```{r results="show", fig.dim=c(6,4)}
+set.seed(1)
+
 # Since we are renaming some values let's make a separate dataset for this model
 loans_tree_nfp <- loans
 
