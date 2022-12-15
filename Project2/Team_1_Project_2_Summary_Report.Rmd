@@ -551,7 +551,7 @@ str(loans_lasso)
 ```
 
 
-The original categorical variables were dropped by keeping the dummy variables and used it for training and testing.
+The original categorical variables were dropped by keeping the dummy variables and using it for training and testing.
 The predictor dataframe included all the variables except the interest rate, as interest rate is the response.
 
 ```{r results='markup'}
@@ -640,10 +640,6 @@ lasso_rsq
 ```
 
 
-
-
-
-
 The below graph shows the Importance of variables to predict the interest rates. To interpret in common language, these predictors play major role in deciding the interest rates for the customers.
 
 ```{r}
@@ -651,8 +647,8 @@ The below graph shows the Importance of variables to predict the interest rates.
 vip(lasso_alpha1_fit)
 ```
 
-It is clear from the graph that the interest rates are decided based on compliance with the credit policy and credit score (fico).
 
+It is clear from the graph that the interest rates are decided based on compliance with the credit policy and credit score (fico).
 
 
 # Logistic Regression for Credit Policy
