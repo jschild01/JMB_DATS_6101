@@ -1084,13 +1084,9 @@ cm_stats %>%
 ```
 
 
-Based on the Kappa statistic of `r round(confusion_matrix$overall["Kappa"], digits=2)` we would evaluate this classifier as almost perfect agreement.
+The high kappa value of .859 suggests there is a high degree of agreement between the predictions and the actual values. Based on this, we would evaluate this classifier as almost perfect agreement.
 
-The sensitivity and specificity values indicate the test can fairly reliably detect loans that meet and fail to meet the credit policy. We can also tell that we have a favorable, high arching, ROC curve after looking at the these values along with with the AUC. 
-
-The high precision indicates the tree is very good identifying true positives, in that 99.6% of its predicted fails were right.
-
-The high kappa value of .859 suggests there is a high degree of agreement between the predictions and the actual values.
+The sensitivity and specificity values indicate the test can fairly reliably detect loans that meet and fail to meet the credit policy. The high precision indicates the tree is very good identifying true positives, in that 99.6% of its predicted fails were right.
 
 
 ### ROC Curve
@@ -1117,9 +1113,9 @@ Similar to what we did for, `credit.policy`, was also did to `not.fully.paid` an
 
 In this case, we are interested in the loans where the value is `TRUE `. That is, loans that were not fully paid, which are in the minority. We will rename the `TRUE` values to `Unpaid`, indicating they failed to be fully paid, and rename the `FALSE` values to `Paid`, indicating they were paid. 
 
-Our initial classification tree did not choose any variables and had only a single trunk node, a kappa value of 0, and a ROC curve that fit directly on top of the random classifier line. We interpreted this as a strong indicator that a classification tree would not be useful for `not.fully.paid`.
+Our initial classification tree for `not.fully.paid` did not choose any variables and had only a single trunk node, a kappa value of 0, and a ROC curve that fit directly on top of the random classifier line. We interpreted this as a strong indicator that a classification tree would not be useful for `not.fully.paid`.
 
-To confirm, we overrode the default complexity parameter in the rpart function and set it from .01 to .001. This led to the classification tree using the variables `credit.policy`, `inq.last.6mths`, `int.rate`, and `purpose`. 
+To confirm, we overrode the default complexity parameter in the rpart function and set it from .01 to .001. 
 
 ```{r results="show", fig.dim=c(6,4)}
 # Since we are renaming some values let's make a separate dataset for this model
@@ -1142,6 +1138,7 @@ summary(creditfit_nfp) # detailed summary of splits
 
 ```
 
+This led to the classification tree using the variables `credit.policy`, `inq.last.6mths`, `int.rate`, and `purpose`. 
 
 ## Visualizing the Tree
 
@@ -1162,7 +1159,7 @@ We can speculate that loans used for `home_improvement` and `small_business` wit
 
 ## Confusion Matrix
 
-To better understand how our model performs we can construct a confusion matrix of the results. The `Unpaid` values will function as the positive cases for the confusion matrix we put together based on the results of the classification tree model.
+Similar to `credit.policy`, we can construct a confusion matrix and examine some of the statistics. The `Unpaid` values will function as the positive cases for the confusion matrix we put together based on the results of the classification tree model.
 ```{r results="show"}
 # Creating the confusion matrix
 confusion_matrix_nfp = confusionMatrix(predict(creditfit_nfp, type = "class"), reference = loans_tree_nfp$not.fully.paid)
@@ -1173,7 +1170,7 @@ confusion_matrix_nfp$byClass
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
 ```
 
-Let's put together tables to visualize the confusion matrix as well some statistics on it.
+Let's put together tables to visualize the confusion matrix.
 
 ```{r results="show"}
 # Creating the confusion matrix table
@@ -1213,7 +1210,7 @@ cm_stats_nfp %>%
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-We immediately see the extremely low specificity value, which indicates the tree was terrible at detecting those that went unpaid. Combined with the low AUC indicates a less than promising ROC curve.
+We immediately see the extremely low specificity value, which indicates the tree is poor at detecting those loans that went unpaid. 
 
 Based on the Kappa statistic of `r round(confusion_matrix_nfp$overall["Kappa"], digits=2)` we would evaluate this classifier as only slight agreement, which confirms our initial suspicion that the classification tree for `not.fully.paid` would not be useful. 
 
@@ -1230,7 +1227,7 @@ plot(tree_roc_nfp)
 
 ```
 
-The AUC of the ROC is `r auc(tree_roc_nfp)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model. We can conclude that this is overall a poor model for determining if a loan will default.
+The AUC is `r auc(tree_roc_nfp)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model. This, with some of those other poor statistics, we can confidently conclude that this is overall a poor model for determining if a loan will default.
 
 
 
