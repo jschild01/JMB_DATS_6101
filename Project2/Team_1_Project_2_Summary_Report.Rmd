@@ -527,7 +527,7 @@ Note here the first linear model built with the features with the highest import
 
 # LASSO Regression
 
-We decided to try LASSO regression as well to see if we could get a better model for interest rate with this method.
+We decided to try LASSO regression as lasso performs better in the presence of outliers and avoids overfitting, and eliminates less important features thereby helping in interpreting the model better.
 
 ```{r results="show"}
 loans_lasso <- loans
@@ -640,13 +640,15 @@ lasso_rsq
 ```
 
 
-The graph of Importance of variables to predict the interest rates. In other words, these predictors play major role in predicting the interest rates.
+The below graph shows the Importance of variables to predict the interest rates. To interpret in common language, these predictors play major role in deciding the interest rates for the customers.
 
 ```{r}
 # Plotting the variable importance graph
 vip(lasso_alpha1_fit)
 ```
 
+
+It is clear from the graph that the interest rates are decided based on compliance with the credit policy and credit score (fico).
 
 
 # Logistic Regression for Credit Policy
