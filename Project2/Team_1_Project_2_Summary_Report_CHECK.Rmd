@@ -20,7 +20,7 @@ output:
 
 ```{r setup, include=FALSE}
 # We want the results to be hidden by default, though for some chunks we will override this to show the results
-knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F, echo = F)
 ```
 
 ```{r include=FALSE}
@@ -58,6 +58,7 @@ Peer-to-peer (P2P) lending was a phenomenon less than ten years ago, exploding i
 The global P2P lending market is anticipated to grow from \$84 billion in 2021 to \$706 billion by 2030, according to figures from Precedence Research.^[“Peer to Peer (P2P) Lending Market Size, Report 2022-2030.” Peer to Peer (P2P) Lending Market Size, Report 2022-2030, www.precedenceresearch.com/peer-to-peer-lending-market. Accessed 4 Nov. 2022.] This analysis takes a closer look at the mechanics of P2P lending to gain a better understanding of what considerations are factored into decisions to apply for, issue, and provide financing via P2P platforms. Analysis and statistical testing identifies credit underwriting policy and borrowers’ failure to fully pay as variables of interest that should be considered in future in-depth analyses.  
 
 ## What is P2P Lending?
+
 P2P lending is the provision of financing without a traditional bank as the source of funds; it is, like it sounds, peers lending money to their peers. Instead of banks, online lending platforms provide a service that connects willing lenders, or investors, with individuals seeking to borrow funds. Historically, these investors have been predominantly private individuals seeking alternate forms of investments, wherein they receive the interest earned on the money they loan out.
 
 ![](Traditional-P2P-Lending-business-model.jpg) 
@@ -66,21 +67,21 @@ Borrowers, on the other hand, are connected to feasible funding that they might 
 
 
 ## Introducing LendingClub
+
 The P2P market was dominated by LendingClub during the early rise of P2P lending, and it remains a leader in the industry. It makes money by charging borrowers an origination fee, charging investors a service fee, and selling loans in secondary markets. LendingClub’s typical annual percentage rate (APR) is between 5.99% and 35.89% while the origination fee of 1% to 6% is taken off the top of loans. Borrowers on LendingClub typically have good-to-excellent credit (700 or higher credit score) and a low debt-to-income ratio. 
  
 ![](Picture 1.png) 
 
 
-
-
 ## Our Data
+
 Our dataset contains over 9,500 observations of loan data from LendingClub from between 2007 and 2015. We obtained the dataset from Kaggle here: https://www.kaggle.com/datasets/urstrulyvikas/lending-club-loan-data-analysis
 
 Our work is stored on our team GitHub here: https://github.com/jschild01/JMB_DATS_6101
 
 Below are the variables in the dataset and their accompanying definitions as supplied by Kaggle:
 
-```{r results = "show", echo=FALSE}
+```{r results="show", echo=FALSE}
 # This is copied form the Kaggle site
 # We will use a kable table for simplicity
 data_definitions <- data.frame(Variable = c("credit.policy", "purpose", "int.rate", "installment", "log.annual.inc", "dti", "fico", "days.with.cr.line", "revol.bal", "revol.util", "inq.last.6mths", "delinq.2yrs", "pub.rec", "not.fully.paid"),
@@ -104,7 +105,8 @@ kable(data_definitions) %>%
 ```
 
 
-## SMART Question
+## SMART Questions
+
 Our analysis will explore things such as income-to-debt ratios, credit score, interest rates, and delinquencies among direct P2P borrowers in an attempt to understand the risks and opportunities associated with P2P lending. Specifically, we intend to examine the impact that these variables have on who received loans and who defaulted on their loans between 2007 and 2015. 
 
 We will seek to answer the following questions:  
@@ -140,10 +142,12 @@ In summary, our EDA found:
 
 Before we get into making models, there is some work we would like to do with the dataset first.
 
+
 ## Converting Variables
+
 From our EDA we know that the `credit.policy` and `not.fully.paid` variables function as logicals, and the `purpose` variable functions as a factor with 7 levels. We will start by formally converting these variables from numerical data-types in R to logical and the factor data-types, respectively.
 
-```{r}
+```{r echo=FALSE}
 # We determined this makes sense to do from our EDA
 loans$credit.policy <- as.logical(loans$credit.policy)
 loans$not.fully.paid <- as.logical(loans$not.fully.paid)
@@ -155,9 +159,10 @@ Of the `r ncol(loans)` variables in the original dataset, 11 are numeric, 2 are 
 
 
 ## Adding Additional Logicals
+
 From our EDA we saw that the overwhelming majority of loans had a value of 0 for `delinq.2yrs` and `pub.rec`. The variables might be more useful in terms of having stronger correlations and a larger impact in models if we create logical versions of these variables. We will introduce `has.delinq.2yrs` and `has.pub.rec` based on whether or not the value is 0 or greater than 0.
 
-```{r}
+```{r echo=FALSE}
 # It might help to turn these variables into logicals since most are 0
 loans <- loans %>%
   mutate(has.delinq.2yrs = delinq.2yrs > 0,
@@ -166,11 +171,12 @@ loans <- loans %>%
 
 
 ## Revolving Balance Transformation
+
 From our EDA we saw that the `revol.bal` variable had a wide range of values as well as outlier issues. We wondered if it would work better if we took the natural log of it, similar to how the income provided in the dataset (the `log.annual.inc` variable) is in the form of the natural log. However, some values for `revol.bal` are 0, and taking the natural log of that results in -Inf. One way to deal with this without removing those values is to add 1 to all of the values for `revol.bal` before taking the natural log. 
 
 Given the range of these values (the IQR is `r IQR(loans$revol.bal)`) adding one should have a negligible effect, and adding one to all values keeps the data consistent. In case it is significant that the `revol.bal` is 0 we will add a logical variable `has.revol.bal` based on whether the value of `revol.bal` is 0 or greater than 0.
 
-```{r}
+```{r echo=FALSE}
 # Some loans have a revol.bal value of 0, the natural log of which is -Inf
 # Adding 1 to all values before taking the natural log resolves this issue by nudging the value a very small amount
 # In case it was meaningful if the loan had a revol.bal value of 0 versus >0, we can add a logical to account for that
@@ -181,9 +187,10 @@ loans <- loans %>%
 
 
 ## Utility of the new variables
+
 Now that we have added some new variables, it would be helpful to look at a correlation plot and make some comparisons to assess whether they would be more useful going forward than their original forms.
 
-```{r fig.width=8, fig.height=8}
+```{r fig.width=8, fig.height=8, echo=FALSE}
 # A new correlation matrix with the new and transformed variables
 # For our correlation matrix we want to include everything but the purpose variable
 # We can put the new variables together at the top
@@ -298,7 +305,7 @@ From the correlation plot we see 5 combinations of variables with notable correl
 
 ## Interest Rate vs FICO Score
 
-```{r}
+```{r echo=FALSE}
 # fit linear model
 linear_model_1 <- lm(int.rate ~ fico, data=loans)
   
@@ -308,21 +315,12 @@ summary(linear_model_1)
 # scatterplot with regression line and confidence interval
 scatterplot(int.rate ~ fico, data = loans)
 
-#loans %>%
-#  ggplot(aes(x = fico, y = int.rate)) +
-#  geom_point(color = "steelblue", alpha = 0.2) +
-#  geom_smooth(method = "lm", se = T) +
-#  labs(title = "Interest Rate vs FICO Score",
-#       x = "FICO Score", y = "Interest Rate") +
-#  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
-#  scale_y_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
-#  theme_minimal()
 ```
 
 
 ## Revolving Utilization Rate vs Interest Rate
 
-```{r}
+```{r echo=FALSE}
 # fit linear model
 linear_model_2 <- lm(revol.util ~ int.rate, data=loans)
   
@@ -332,21 +330,12 @@ summary(linear_model_2)
 # scatterplot with regression line and confidence interval
 scatterplot(revol.util ~ int.rate, data = loans)
 
-#loans %>%
-#  ggplot(aes(x = int.rate, y = revol.util)) +
-#  geom_point(color = "steelblue", alpha = 0.2) +
-#  geom_smooth(method = "lm") +
-#  labs(title = "Revolving Line Utilization Rate vs Interest Rate",
-#       x = "Interest Rate", y = "Revolving Line Utilization Rate") +
-#  scale_x_continuous(labels = label_percent(), limits = c(.05, NA), expand = expansion(mult = c(0, .05))) +
-#  scale_y_continuous(labels = label_percent(scale = 1)) +
-#  theme_minimal()
 ```
 
 
 ## Installment vs Natural Log of Annual Income
 
-```{r}
+```{r echo=FALSE}
 # fit linear model
 linear_model_3 <- lm(installment ~ log.annual.inc, data=loans)
   
@@ -356,19 +345,12 @@ summary(linear_model_3)
 # scatterplot with regression line and confidence interval
 scatterplot(installment ~ log.annual.inc, data = loans)
 
-#loans %>%
-#  ggplot(aes(x = log.annual.inc, y = installment)) +
-#  geom_point(color = "steelblue", alpha = 0.2) +
-#  geom_smooth(method = "lm") +
-#  labs(title = "Installment vs Log of Annual Income",
-#       x = "Log of Annual Income", y = "Installment") +
-#  theme_minimal()
 ```
 
 
 ## Revolving Utilization Rate vs FICO Score
 
-```{r}
+```{r echo=FALSE}
 # fit linear model
 linear_model_4 <- lm(revol.util ~ fico, data=loans)
   
@@ -378,21 +360,12 @@ summary(linear_model_4)
 # scatterplot with regression line and confidence interval
 scatterplot(revol.util ~ fico, data = loans)
 
-#loans %>%
-#  ggplot(aes(x = fico, y = revol.util)) +
-#  geom_point(color = "steelblue", alpha = 0.2) +
-#  geom_smooth(method = "lm") +
-#  labs(title = "Revolving Line Utilization Rate vs FICO Score",
-#       x = "FICO Score", y = "Revolving Line Utilization Rate") +
-#  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
-#  scale_y_continuous(labels = label_percent(scale = 1)) +
-#  theme_minimal()
 ```
 
 
 ## Revolving Utilization Rate vs Natural Log of Revolving Balance
 
-```{r}
+```{r echo=FALSE}
 # fit linear model
 linear_model_5 <- lm(revol.util ~ log.revol.bal, data=loans)
   
@@ -402,15 +375,6 @@ summary(linear_model_5)
 # scatterplot with regression line and confidence interval
 scatterplot(revol.util ~ log.revol.bal, data = loans)
 
-#loans %>%
-#  ggplot(aes(x = fico, y = revol.util)) +
-#  geom_point(color = "steelblue", alpha = 0.2) +
-#  geom_smooth(method = "lm") +
-#  labs(title = "Revolving Line Utilization Rate vs FICO Score",
-#       x = "FICO Score", y = "Revolving Line Utilization Rate") +
-#  scale_x_continuous(limits = c(600, NA), expand = expansion(mult = c(0, .05))) +
-#  scale_y_continuous(labels = label_percent(scale = 1)) +
-#  theme_minimal()
 ```
 
 
@@ -525,7 +489,7 @@ plot(mlr_int_model_2)
 Note here the first linear model built with the features with the highest importance has no multicolinearity but has high heteroscedasticity. In order to remove that we performed a box cox transformation. That reduced the heteroscedasticity but did not solve the problem So, I used the sandwich library and that helped. The resulting model is homoscedastic and explains 67%. 
 This confirms our hypothesis that riskier the loan higher the interest rate.
 
-# LASSO Regression
+# LASSO Regression for Interest Rate
 
 We decided to try LASSO regression as lasso performs better in the presence of outliers and avoids overfitting, and eliminates less important features thereby helping in interpreting the model better.
 
@@ -1254,6 +1218,10 @@ Since our logistic regression and classification tree models for `credit.policy`
 # We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
 loans_tree %>%
   mutate(vector_prediction = predict(creditfit, type = "vector")) %>%
+  mutate(vector_prediction = case_when(
+    vector_prediction == 1 ~ FALSE,
+    vector_prediction == 2 ~ TRUE
+  )) %>%
   group_by(vector_prediction) %>%
   summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
   ungroup() %>%
@@ -1267,7 +1235,7 @@ Now let's try the logistic regression model:
 ```{r results = "show", echo=FALSE}
 # We will convert the average to an easier to read percentage by multiplying by 100, rounding, and adding a "%" at the end.
 loans %>%
-  mutate(vector_prediction = round(predict(logit_credit_model, type = "response"))) %>%
+  mutate(vector_prediction = as.logical(round(predict(logit_credit_model, type = "response")))) %>%
   group_by(vector_prediction) %>%
   summarize(percent_not_fully_paid = paste0(round(100*mean(not.fully.paid), 1), "%"))  %>%
   ungroup() %>%
