@@ -602,6 +602,7 @@ scatterplot(revol.util ~ log.revol.bal, data = loans)
 
 Overall we can conclude that simple linear regression is not an effective way to model these relationships, though the first model isn't too bad.
 
+Just to note here since none of the relationships are linear. This means we can build a multiple linear model with the variables as multicolinearity is not going to be an issue.
 
 
 # Logistic Regression for Credit Policy

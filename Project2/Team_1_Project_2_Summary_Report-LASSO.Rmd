@@ -428,13 +428,14 @@ scatterplot(revol.util ~ log.revol.bal, data = loans)
 
 Overall we can conclude that simple linear regression is not an effective way to model these relationships, though the first model isn't too bad.
 
-
+Since, none of the variables are quite linearly related this should mean multicolinearity shouldn't be a problem here while we build our MLR.
 
 # Multiple Linear Regression for Interest Rate
 
 Since we know that interest rate is higher for riskier loans we wanted to test that by building a model to predict interest rate.
 
 ## Feature Selection
+This helps us to rank the independent variables in the descending order of their importance and helps us pick the ones that we relevant in deciding the rate of interest for a loan. It is to be noted that variables like revolving balance and revolving utility isn't available at the time of deciding the rate of interest these cannot be used in the model.
 
 ```{r}
 set.seed(7)
@@ -522,8 +523,7 @@ plot(mlr_int_model_2)
 ```
 
 Note here the first linear model built with the features with the highest importance has no multicolinearity but has high heteroscedasticity. In order to remove that we performed a box cox transformation. That reduced the heteroscedasticity but did not solve the problem So, I used the sandwich library and that helped. The resulting model is homoscedastic and explains 67%. 
-
-
+This confirms our hypothesis that riskier the loan higher the interest rate.
 
 # LASSO Regression
 
@@ -672,6 +672,8 @@ credit_policy_purpose_table %>%
 
 
 ## Feature Selection
+
+This helps us to rank the independent variables in the descending order of their importance and helps us pick the ones that we relevant in deciding the credit underwriting criteria for a loan. It is to be noted that variables like revolving balance and revolving utility isn't available at the time of deciding the credit policy these cannot be used in the model.
 
 ```{r results="show"}
 set.seed(7)
@@ -825,6 +827,7 @@ nfp_purpose_table %>%
 
 ## Feature Selection
 
+This helps us rank the dependent variables in the order of their statistical significance while predicting `not.fully.paid`. Since, all the variables are available at the time of deciding if the loan can be paid back or not all the variables are applied whilebuilding the final model.
 ```{r}
 set.seed(7)
 loans_logit_nfp <- loans
