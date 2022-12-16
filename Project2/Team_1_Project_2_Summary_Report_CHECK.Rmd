@@ -599,7 +599,7 @@ lasso_mse
 ```
 
 
-The R-squared value
+The R-squared value:
 
 ```{r results='markup'}
 # R squared
@@ -962,7 +962,7 @@ creditfit <- rpart(credit.policy ~ purpose	+ int.rate + installment + log.annual
 
 printcp(creditfit) # display the results 
 plotcp(creditfit) # visualize cross-validation results
-summary(creditfit) # detailed summary of splits
+# summary(creditfit) # detailed summary of splits
 
 ```
 
@@ -1011,8 +1011,8 @@ To better understand how our model performs we can construct a confusion matrix 
 confusion_matrix = confusionMatrix(predict(creditfit, type = "class"), reference = loans_tree$credit.policy)
 print('Overall: ')
 confusion_matrix$overall
-print('Class: ')
-confusion_matrix$byClass
+# print('Class: ')
+# confusion_matrix$byClass
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
 ```
 
@@ -1063,7 +1063,7 @@ The high kappa value of .859 suggests there is a high degree of agreement betwee
 The sensitivity and specificity values indicate the test can fairly reliably detect loans that meet and fail to meet the credit policy. The high precision indicates the tree is very good identifying true positives, in that 99.6% of its predicted fails were right.
 
 
-### ROC Curve
+## ROC Curve
 
 Another way that we can evaluate the performance of the model is to look at the ROC curve and the area under the curve (AUC).
 
@@ -1076,7 +1076,7 @@ plot(tree_roc)
 
 ```
 
-The AUC of the ROC is `r auc(tree_roc)`, which is greater than the 0.8 threshold, so we would consider this to be a good indicator/model. We can conclude that this is overall an effective model for determining if a loan will meet the credit underwriting policy set by LendingClub.
+The AUC of the ROC is `r round(auc(tree_roc),2)`, which is greater than the 0.8 threshold, so we would consider this to be a good indicator/model. We can conclude that this is overall an effective model for determining if a loan will meet the credit underwriting policy set by LendingClub.
 
 
 
@@ -1110,7 +1110,7 @@ creditfit_nfp <- rpart(not.fully.paid ~ purpose	+ int.rate + installment + log.a
 
 printcp(creditfit_nfp) # display the results 
 plotcp(creditfit_nfp) # visualize cross-validation results
-summary(creditfit_nfp) # detailed summary of splits
+# summary(creditfit_nfp) # detailed summary of splits
 
 ```
 
@@ -1141,8 +1141,8 @@ Similar to `credit.policy`, we can construct a confusion matrix and examine some
 confusion_matrix_nfp = confusionMatrix(predict(creditfit_nfp, type = "class"), reference = loans_tree_nfp$not.fully.paid)
 print('Overall: ')
 confusion_matrix_nfp$overall
-print('Class: ')
-confusion_matrix_nfp$byClass
+# print('Class: ')
+# confusion_matrix_nfp$byClass
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance). The kappa statistic is used not only to evaluate a single classifier, but also to evaluate classifiers amongst themselves.According to their scheme a value < 0 is indicating no agreement , 0–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as moderate, 0.61–0.80 as substantial, and 0.81–1 as almost perfect agreement. 
 ```
 
@@ -1203,11 +1203,16 @@ plot(tree_roc_nfp)
 
 ```
 
-The AUC is `r auc(tree_roc_nfp)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model. This, with some of those other poor statistics, we can confidently conclude that this is overall a poor model for determining if a loan will default.
+The AUC is `r round(auc(tree_roc_nfp),2)`, which is much less than the preferred 0.8 threshold, so we would consider this to be a poor model. This, with some of those other poor statistics, we can confidently conclude that this is overall a poor model for determining if a loan will default.
 
 
 
-# Model Application
+# Conclusion
+
+Overall, most of our models did not perform well. However, the logistic regression and classification tree models for `credit.policy` worked very well.
+
+
+## Model Application
 
 In our EDA we looked at loans that meet the credit underwriting criteria vs the borrower not fully paying. Based on the `credit.policy` and `not.fully.paid` variables, we calculated the percentage of borrowers who did not fully pay based on if they met the credit underwriting criteria.
 
@@ -1257,12 +1262,6 @@ loans %>%
 ```
 
 We can see that the results from using our model predictions are about the same as LendingClub's actual credit underwriting policy. That is to say, if we decided who should get a loan using our models, for this data our models would perform about as well as LendingClub's credit underwriting policy in terms of trying to avoid giving loans that will end up defaulting.
-
-
-
-# Conclusion
-
-Overall, most of our models did not perform well. However, the logistic regression and classification tree models for `credit.policy` worked very well.
 
 
 ## Answers to SMART Questions
