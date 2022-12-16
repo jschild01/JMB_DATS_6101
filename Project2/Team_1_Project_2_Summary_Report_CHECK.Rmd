@@ -1,6 +1,6 @@
 ---
 title: "LendingClub Peer-to-Peer Loan Analysis"
-author: "Team 1: Jonathan Schild, Medhasweta Sen, Brian Gulko, Bharat Premnath"
+author: "Team 1: Jonathan Schild, Medhasweta Sen, Brian Gulko, Bharat Premnath | The George Washington University"
 date: "`r Sys.Date()`"
 always_allow_html: true
 output:
@@ -66,7 +66,7 @@ P2P lending is the provision of financing without a traditional bank as the sour
 Borrowers, on the other hand, are connected to feasible funding that they might not have otherwise been able to attain. Many borrowers participating in P2P lending did or would have experienced difficulties qualifying for traditional loans from banks. This perception of higher risk among the lenders can often translate into higher interest rates. P2P platforms screen borrowers and set rates and terms but it is ultimately up to the lender whether they will provide the funds. 
 
 
-## Introducing LendingClub
+## LendingClub
 
 The P2P market was dominated by LendingClub during the early rise of P2P lending, and it remains a leader in the industry. It makes money by charging borrowers an origination fee, charging investors a service fee, and selling loans in secondary markets. LendingClub’s typical annual percentage rate (APR) is between 5.99% and 35.89% while the origination fee of 1% to 6% is taken off the top of loans. Borrowers on LendingClub typically have good-to-excellent credit (700 or higher credit score) and a low debt-to-income ratio. 
  
@@ -111,8 +111,10 @@ Our analysis will explore things such as income-to-debt ratios, credit score, in
 
 We will seek to answer the following questions:  
 
-1.	What variable or variables, if any, have an impact on if the person meets the credit underwriting criteria?  
-2.	What variable or variables, if any, have an impact on if the person fully repays the loan?  
+1.	What variable or variables, if any, have an impact on if the person meets the credit underwriting criteria?
+
+2.	What variable or variables, if any, have an impact on if the person fully repays the loan?
+
 3.	Do borrowers who meet the credit underwriting criteria have a lower chance of not fully repaying the loan? If so, how big is the difference?
 
 
@@ -130,6 +132,9 @@ Our exploratory data analysis followed the below 9-step checklist presented in C
 7. Make a plot  
 8. Try the easy solution first  
 9. Follow up
+
+
+Since our dataset is a subset of all loans facilitated by LendingClub between the years 2007 and 2015, we treated it as a sample and conducted t-tests which confirmed that the means of all the variables of the sample coincide with the means of our population. However, we could not perform z-tests on this data because we could not make an estimate about the standard deviation of the population (all loans facilitated by LendingClub).^[End to end case study (classification): Lending Club Data. (n.d.). Retrieved November 3, 2022, from https://towardsdatascience.com/end-to-end-case-study-classification-lending-club-data-489f8a1b100a] ^[Yiu, T. (2019, June 19). Turning Lending Club’s Worst Loans into Investment Gold. Medium. https://towardsdatascience.com/turning-lending-clubs-worst-loans-into-investment-gold-475ec97f58ee] ^[Lending Club Review: How it Works, Requirements and Alternatives. (n.d.). Debt.org. https://www.debt.org/credit/loans/personal/lending-club-review/] ^[Project 1: Analysis of Lending Club’s data. (n.d.). Data Science Blog. Retrieved November 3, 2022, from https://nycdatascience.com/blog/student-works/project-1-analysis-of-lending-clubs-data/] ^[Ph.D, M. K. (2019, April 9). LendingClub: bias in data? Machine learning and investment strategy. Retrieved November 3, 2022, from Medium website: https://michel-kana.medium.com/lendingclub-bias-in-data-machine-learning-and-investment-strategy-3a3bd1c65f0]
 
 
 In summary, our EDA found:
@@ -567,7 +572,7 @@ lasso_alpha1_fit <- cv.glmnet(lasso_train_x, lasso_train_y, alpha=1, type.measur
 The `cv.glmnet()` function performs the 10 fold cross validation on our training data and picks the best lambda value based on least mean square cross validation error criteria.
 For our case, the lambda is `r lasso_alpha1_fit$lambda.min`.
 
-```{r results='markup'}
+```{r}
 # Best Lambda
 lasso_best_lambda <- lasso_alpha1_fit$lambda.min
 lasso_best_lambda
@@ -647,7 +652,7 @@ credit_policy_purpose_table %>%
 
 This helps us to rank the independent variables in the descending order of their importance and helps us pick the ones that we relevant in deciding the credit underwriting criteria for a loan. It is to be noted that variables like revolving balance and revolving utility isn't available at the time of deciding the credit policy these cannot be used in the model.
 
-```{r results="show"}
+```{r}
 set.seed(7)
 loans_logit_credit <- loans
 
@@ -664,7 +669,9 @@ logit_credit_importance <- varImp(logit_credit_training, scale=FALSE)
 
 # summarize importance
 print(logit_credit_importance)
+```
 
+```{r results="show"}
 # plot importance
 plot(logit_credit_importance)
 ```
@@ -679,7 +686,7 @@ logit_credit_model <- glm(credit.policy ~ inq.last.6mths+fico+log.annual.inc+dti
 We can see the summary of the logit model here:
 
 ```{r results='markup'}
-summary(logit_credit_model)
+# summary(logit_credit_model)
 
 # nicer table for the model summary
 xkabledply(logit_credit_model, title = "Logistic Regression :")
@@ -817,7 +824,9 @@ logit_nfp_importance <- varImp(logit_nfp_training, scale=FALSE)
 
 # summarize importance
 print(logit_nfp_importance)
+```
 
+```{r results="show"}
 # plot importance
 plot(logit_nfp_importance)
 ```
@@ -832,7 +841,7 @@ logit_nfp_model <- glm(not.fully.paid ~., data = loans_logit_nfp, binomial(link 
 We can see the summary of the logit model here:
 
 ```{r results='markup'}
-summary(logit_nfp_model)
+# summary(logit_nfp_model)
 
 # nicer table for the model summary
 xkabledply(logit_nfp_model, title = "Logistic Regression :")
@@ -849,9 +858,6 @@ logit_nfp_p_fitted <- logit_nfp_model$fitted.values[1] # this is the model predi
 logit_nfp_p_fitted
 ```
 
-This is stored in the model as the fitted value for the probability `p` of the first data point. Since the actual data point is a 0/1 True/False value, it is not easy to directly compare them unless we use a cutoff value (default as 0.5) to convert the probability `p` to 0/1.
-
-Now, for unseen data point, we can use the `predict( )` function to find the model predicted values. But be careful of what you are getting with the `predict()` function in classification models. Let us compare the three options below. For easy comparison, let us use the same data point in the dataset as an example.
 
 ```{r}
 # This gives you the predicted values of the data points inside the model.
@@ -1271,23 +1277,26 @@ We can provide some answers to our SMART questions as a result of our analysis a
 
 1.	What variable or variables, if any, have an impact on if the person meets the credit underwriting criteria?   
 
-We know from our logistic regression and classification tree models that the _______ variables strongly influence the likelihood of a barrorwe meeting the credit underwriting criteria (`credit.policy` of `TRUE`).
+We know from our logistic regression and classification tree models that the `fico` and `inq.last.6mths` variables strongly influence the likelihood of a borrorew meeting the credit underwriting criteria (`credit.policy` of `TRUE`).
 
 2.	What variable or variables, if any, have an impact on if the person fully repays the loan?  
 
-From our analysis and models we were not able to come to a clear answer on this.  
+From our analysis and models we were not able to come to a clear answer on this.
 
 3.	Do borrowers who meet the credit underwriting criteria have a lower chance of not fully repaying the loan? If so, how big is the difference?
 
 We know that borrowers who meet the credit underwriting criteria are about half as likely to default as those who do not meet the credit underwriting criteria. When we apply our models' predictions we get very similar results.
 
 
+In addition, our analysis led us to further explore the factors related to the interest rate of a loan. We hypothesized that the riskier the loan the higher is the interest rate and subsequent installment payments. This was proven true by out MLR and LASSO regression models as `credit.policy` being `TRUE` is one of the most statistically significant factors when predicting `int.rate`.
+
+
 ## Research Benefit
 
-As a result of our work we can conclude that meeting the credit underwriting criteria is very important in reducing the likelihood of not fully repaying the loan. Furthermore, we now understand that _______ are key factors in determining if borrowers met LendingClub's credit underwriting criteria, and therefore were at much lower risk of defaulting.
+As a result of our work we can conclude that meeting the credit underwriting criteria is very important in reducing the likelihood of not fully repaying the loan. Furthermore, we now understand that `fico`, `log.annual.inc`, `purpose`, and `inq.last.6mths` are key factors in determining if borrowers met LendingClub's credit underwriting criteria, and therefore were at much lower risk of defaulting.
 
-From this we now have a much better udnerstanding of the risk factors that were present in P2P loans.
+From this we now have a much better understanding of the risk factors that were present in P2P loans.
 
-
+![](GW_Logo.png) 
 
 
