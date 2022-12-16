@@ -502,6 +502,8 @@ plot(mlr_int_model_2)
 Note here the first linear model built with the features with the highest importance has no multicolinearity but has high heteroscedasticity. In order to remove that we performed a box cox transformation. That reduced the heteroscedasticity but did not solve the problem So, I used the sandwich library and that helped. The resulting model is homoscedastic and explains 67%. 
 This confirms our hypothesis that riskier the loan higher the interest rate.
 
+
+
 # LASSO Regression for Interest Rate
 
 We decided to try LASSO regression as lasso performs better in the presence of outliers and avoids overfitting, and eliminates less important features thereby helping in interpreting the model better.
@@ -617,19 +619,15 @@ lasso_rsq
 ```
 
 
-
-
-
-
 The below graph shows the Importance of variables to predict the interest rates. To interpret in common language, these predictors play major role in deciding the interest rates for the customers.
 
 ```{r}
 # Plotting the variable importance graph
-vip(lasso_alpha1_fit)
+vip(lasso_alpha1_fit, aesthetics = list(fill = "steelblue")) +
+  theme_minimal()
 ```
 
 It is clear from the graph that the interest rates are heavily influenced by the compliance with the credit policy and credit score (fico).
-
 
 
 
