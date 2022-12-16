@@ -623,7 +623,7 @@ The below graph shows the Importance of variables to predict the interest rates.
 vip(lasso_alpha1_fit)
 ```
 
-It is clear from the graph that the interest rates are decided based on compliance with the credit policy and credit score (fico).
+It is clear from the graph that the interest rates are heavily influenced by the compliance with the credit policy and credit score (fico).
 
 
 
